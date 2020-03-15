@@ -17,12 +17,15 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
-	"io"
+	"log"
 	"os"
 	"path"
 	"strings"
+
+	"dogdaze.org/sudoku/generator"
 )
 
 type inputs []string
@@ -47,7 +50,7 @@ func init() {
 	flag.IntVar(&level1Count, "1", 0, "`count` of medium games to generate")
 	flag.IntVar(&level2Count, "2", 0, "`count` of hard games to generate")
 	flag.IntVar(&level3Count, "3", 0, "`count` of ridiculous games to generate")
-	flag.IntVar(&level4Count, "4", 0, "`count` of (almost) impossible games to generate")
+	flag.IntVar(&level4Count, "4", 0, "`count` of insane (nearly impossible) games to generate")
 
 	flag.Var(&input, "i", "`file` containing input patterns (may be repeated)")
 
@@ -65,21 +68,92 @@ func main() {
 	flag.CommandLine.Usage = usage
 	flag.Parse()
 
-	r := make([]io.Reader, 0)
-	for _, i := range input {
+	if len(input) > 0 && (level0Count > 0 || level1Count > 0 || level2Count > 0 || level3Count > 0 || level4Count > 0) {
+		usage()
+		os.Exit(1)
+	}
 
-		f, err := os.Open(i)
-		if err != nil {
-			panic(fmt.Sprintf("cannot open %s for reading", i))
+	if len(input) > 0 { // Handle -i files.
+		for _, i := range input {
+			f, err := os.Open(i)
+			if err != nil {
+				fmt.Printf("cannot open %s for reading; skipping\n", i)
+				continue
+			}
+			defer f.Close()
+
+			all := 0
+			sol := 0
+			s := bufio.NewScanner(f)
+			for s.Scan() {
+				all++
+				line := s.Text()
+				log.Printf("Encoded: %s", line)
+
+				grid, err := generator.ParseEncoded(line)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					continue
+				}
+				grid.Display()
+				maxLevel, solved := grid.Reduce()
+				grid.Display()
+				if solved {
+					sol++
+					log.Printf("level: %s, solved", maxLevel)
+				} else {
+					log.Printf("level: %s, not solved", maxLevel)
+					solutions := make([]*generator.Grid, 0)
+					grid.Search(&solutions)
+					switch len(solutions) {
+					case 0:
+						log.Println("still not solved after search")
+					case 1:
+						sol++
+						log.Println("single solution found")
+						solutions[0].Display()
+					default:
+						log.Println("multiple solutions found")
+						for _, s := range solutions {
+							s.Display()
+						}
+					}
+				}
+			}
+			log.Printf("solved %d of %d", sol, all)
 		}
-		r = append(r, f)
+	} else { // Generate puzzles of levels given in -0, -1, -2, -3, -4.
+		grid := generator.Randomize()
+		grid.Display()
+		maxLevel, solved := grid.Reduce()
+		grid.Display()
+		if solved {
+			log.Printf("level: %s, solved", maxLevel)
+		} else {
+			log.Printf("level: %s, not solved", maxLevel)
+			solutions := make([]*generator.Grid, 0)
+			grid.Search(&solutions)
+			switch len(solutions) {
+			case 0:
+				log.Println("still not solved after search")
+			case 1:
+				log.Println("single solution found")
+				solutions[0].Display()
+			default:
+				log.Println("multiple solutions found")
+				for _, s := range solutions {
+					s.Display()
+				}
+			}
+		}
 	}
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s\n", path.Base(os.Args[0]))
-	fmt.Fprintf(os.Stderr, "buildStamp: %s, gitHash: %s, version: %s\n", buildStamp, gitHash, version)
+	fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", path.Base(os.Args[0]))
 	flag.PrintDefaults()
+	fmt.Fprintln(os.Stderr, "\nEither -i or level counts (-0, -1, -2, -3, -4) may be used, but not both.")
+	fmt.Fprintf(os.Stderr, "\nbuildStamp: %s, gitHash: %s, version: %s\n", buildStamp, gitHash, version)
 }
 
 func (i *inputs) Set(value string) error {
