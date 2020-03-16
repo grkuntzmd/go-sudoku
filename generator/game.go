@@ -16,24 +16,8 @@
 
 package generator
 
-// hiddenSingle solves a cell if it contains the only instance of a digit within its group (box, column, row) and returns true if it changes any cells.
-func (g *Grid) hiddenSingle() bool {
-	return g.hiddenSingleGroup(&box) || g.hiddenSingleGroup(&col) || g.hiddenSingleGroup(&row)
-}
-
-func (g *Grid) hiddenSingleGroup(gr *group) (res bool) {
-	for ui, u := range gr.unit {
-		points := g.digitPoints(u)
-
-		for d := 1; d <= 9; d++ {
-			if len(points[d]) == 1 {
-				p := points[d][0]
-				if g.pt(&p).setTo(1 << d) {
-					g.cellChange(&res, "hiddenSingle: in %s %d set %s to %d", gr.name, ui, &p, d)
-				}
-			}
-		}
-	}
-
-	return
+type Game struct {
+	Level
+	Filled           int
+	Puzzle, Solution *Grid
 }

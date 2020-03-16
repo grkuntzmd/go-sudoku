@@ -31,6 +31,11 @@ type (
 		orig  [rows][cols]bool
 		cells [rows][cols]cell
 	}
+
+	pointCell struct {
+		*point
+		cell
+	}
 )
 
 const (
@@ -56,16 +61,17 @@ const (
 )
 
 var (
-	color bool
-
-	verbose int
+	attempts uint
+	color    bool
+	verbose  uint
 )
 
 func init() {
 	rand.Seed(time.Now().Unix())
 
+	flag.UintVar(&attempts, "a", 10, "maximum `attempts` to generate a puzzle")
 	flag.BoolVar(&color, "c", false, "colorize the output for ANSI terminals")
-	flag.IntVar(&verbose, "v", 0, "`verbodity` level; higher emits more messages")
+	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 }
 
 // ParseEncoded parses an input string contains 81 digits and dots ('.') representing an initial puzzle layout.
@@ -107,11 +113,11 @@ func Randomize() *Grid {
 	var group [9][9]point
 	switch rand.Intn(3) {
 	case 0:
-		group = box.points
+		group = box.unit
 	case 1:
-		group = col.points
+		group = col.unit
 	case 2:
-		group = row.points
+		group = row.unit
 	}
 
 	for i, p := range group[rand.Intn(9)] {
@@ -119,6 +125,16 @@ func Randomize() *Grid {
 	}
 
 	return &g
+}
+
+func (g *Grid) allPoints() (res []pointCell) {
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			res = append(res, pointCell{&point{r, c}, g.cells[r][c]})
+		}
+	}
+
+	return
 }
 
 // cellChange is a convenience function that is called by strategy methods when a cell changes value.
@@ -184,7 +200,7 @@ func (g *Grid) Display() {
 // digitPlaces returns an array of digits containing values where the bits (1 - 9) are set if the corresponding digit appears in that cell.
 func (g *Grid) digitPlaces(points [9]point) (res [10]cell) {
 	for pi, p := range points {
-		cell := *g.pt(p)
+		cell := *g.pt(&p)
 		for d := 1; d <= 9; d++ {
 			if cell&(1<<d) != 0 {
 				res[d] |= 1 << pi
@@ -197,7 +213,7 @@ func (g *Grid) digitPlaces(points [9]point) (res [10]cell) {
 // digitPoints builds a table of points that contain each digit.
 func (g *Grid) digitPoints(ps [9]point) (res [10][]point) {
 	for _, p := range ps {
-		cell := *g.pt(p)
+		cell := *g.pt(&p)
 		for d := 1; d <= 9; d++ {
 			if cell&(1<<d) != 0 {
 				res[d] = append(res[d], p)
@@ -270,16 +286,16 @@ func (g *Grid) minPoint() (p point, found bool) {
 }
 
 // pt returns the cell at a given point.
-func (g *Grid) pt(p point) *cell {
+func (g *Grid) pt(p *point) *cell {
 	return &g.cells[p.r][p.c]
 }
 
 // Reduce eliminates candidates from cells using logical methods. For example if a cell contains a single digit candidate, that digit can be removed from all other cells in the same box, row, and column.
 func (g *Grid) Reduce() (Level, bool) {
-	maxLevel := Easy
+	maxLevel := Trivial
 
 	if g.emptyCell() {
-		return Easy, false
+		return Trivial, false
 	}
 
 	for {
@@ -287,7 +303,7 @@ func (g *Grid) Reduce() (Level, bool) {
 			return maxLevel, true
 		}
 
-		if g.reduceLevel(maxLevel, Easy, []func() bool{
+		if g.reduceLevel(&maxLevel, Trivial, []func() bool{
 			g.nakedSingle,
 			g.hiddenSingle,
 			g.nakedPair,
@@ -296,25 +312,29 @@ func (g *Grid) Reduce() (Level, bool) {
 			g.hiddenPair,
 			g.hiddenTriple,
 			g.hiddenQuad,
+			g.pointingLine,
+			g.boxLine,
 		}) {
 			continue
 		}
 
-		if g.reduceLevel(maxLevel, Medium, []func() bool{}) {
+		if g.reduceLevel(&maxLevel, Tough, []func() bool{
+			g.xWing,
+		}) {
 			continue
 		}
 
-		if g.reduceLevel(maxLevel, Hard, []func() bool{}) {
-			continue
-		}
+		// if g.reduceLevel(&maxLevel, Diabolical, []func() bool{}) {
+		// 	continue
+		// }
 
-		if g.reduceLevel(maxLevel, Ridiculous, []func() bool{}) {
-			continue
-		}
+		// if g.reduceLevel(&maxLevel, Extreme, []func() bool{}) {
+		// 	continue
+		// }
 
-		if g.reduceLevel(maxLevel, Insane, []func() bool{}) {
-			continue
-		}
+		// if g.reduceLevel(&maxLevel, Insane, []func() bool{}) {
+		// 	continue
+		// }
 
 		break
 	}
@@ -322,11 +342,11 @@ func (g *Grid) Reduce() (Level, bool) {
 	return maxLevel, false
 }
 
-func (g *Grid) reduceLevel(maxLevel, level Level, fs []func() bool) bool {
+func (g *Grid) reduceLevel(maxLevel *Level, level Level, fs []func() bool) bool {
 	for _, f := range fs {
 		if f() {
-			if maxLevel < level {
-				maxLevel = level
+			if *maxLevel < level {
+				*maxLevel = level
 			}
 			return true
 		}
@@ -351,12 +371,12 @@ func (g *Grid) Search(solutions *[]*Grid) {
 		return
 	}
 
-	digits := g.pt(point).digits()
+	digits := g.pt(&point).digits()
 	rand.Shuffle(len(digits), func(i, j int) { digits[i], digits[j] = digits[j], digits[i] })
 
 	for _, d := range digits {
 		cp := *g
-		*cp.pt(point) = 1 << d
+		*cp.pt(&point) = 1 << d
 		_, solved := cp.Reduce()
 
 		if solved {
@@ -382,10 +402,10 @@ func (g *Grid) solved() bool {
 }
 
 func (g *Grid) solvedGroup(gr *group) bool {
-	for _, ps := range gr.points {
+	for _, ps := range gr.unit {
 		cells := [10]int{}
 		for _, p := range ps {
-			cell := *g.pt(p)
+			cell := *g.pt(&p)
 
 			if g.orig[p.r][p.c] && bitCount[cell] != 1 {
 				log.Panicf("changed original cell (%d, %d) to %#b", p.r, p.c, cell)
@@ -410,6 +430,82 @@ func (g *Grid) solvedGroup(gr *group) bool {
 	}
 
 	return true
+}
+
+func Worker(tasks chan Level, results chan *Game) {
+outer:
+	for level := range tasks {
+		maxAttempts := attempts
+
+	inner:
+		for {
+			grid := Randomize()
+			solutions := make([]*Grid, 0, 2)
+			grid.Search(&solutions)
+			if len(solutions) == 0 {
+				maxAttempts--
+				if maxAttempts == 0 { // If too many attempts, push a nil and start again with a new level.
+					results <- nil
+					continue outer
+				}
+			}
+
+			solution := solutions[0]
+			points := solution.allPoints()                                                            // Get all points from the first solution.
+			rand.Shuffle(len(points), func(i, j int) { points[i], points[j] = points[j], points[i] }) // Shuffle them.
+
+			// Clear the grid.
+			for r := 0; r < rows; r++ {
+				for c := 0; c < cols; c++ {
+					grid.cells[r][c] = all
+				}
+			}
+
+			// Fill in the first 17 points from the shuffled set. We use 17 points because it is known that the smallest number of cells required to get a unique solution is 17 (https://en.wikipedia.org/wiki/Mathematics_of_Sudoku).
+			for p := 0; p < 17; p++ {
+				point := points[p].point
+				cell := points[p].cell
+				grid.pt(point).setTo(cell)
+				grid.orig[point.r][point.c] = true
+				points = points[1:]
+			}
+
+			// Attempt to solve the grid at the given level. Keep adding points until the level is achieved and there is a unique solution.
+			for {
+				cp := *grid
+
+				l, solved := cp.Reduce()
+				solutions = solutions[:0]
+				cp.Search(&solutions)
+
+				if solved && l == level && len(solutions) == 1 {
+					solution := solutions[0]
+					solution.orig = grid.orig
+					results <- &Game{level, 81 - len(points), grid, solution}
+					continue outer
+				}
+
+				if len(points) == 0 { // If there are no more points to add, abort this attempt.
+					maxAttempts--
+					if maxAttempts == 0 { // If too many attempts, push a nil and start again with a new level.
+						results <- nil
+						continue outer
+					}
+
+					continue inner // Otherwise just try a new randomized grid at the same level.
+				}
+
+				// Add the next point from the point slice to the grid and try solving again.
+				point := points[0].point
+				cell := points[0].cell
+				grid.pt(point).setTo(cell)
+				grid.orig[point.r][point.c] = true
+				points = points[1:]
+				continue
+			}
+
+		}
+	}
 }
 
 // center centers a string in the given width field.

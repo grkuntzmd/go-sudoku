@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 
 	"dogdaze.org/sudoku/generator"
@@ -38,19 +39,19 @@ var (
 
 	level0Count int
 	level1Count int
-	level2Count int
-	level3Count int
-	level4Count int
+	// level2Count int
+	// level3Count int
+	// level4Count int
 
 	input inputs
 )
 
 func init() {
-	flag.IntVar(&level0Count, "0", 0, "`count` of easy games to generate")
-	flag.IntVar(&level1Count, "1", 0, "`count` of medium games to generate")
-	flag.IntVar(&level2Count, "2", 0, "`count` of hard games to generate")
-	flag.IntVar(&level3Count, "3", 0, "`count` of ridiculous games to generate")
-	flag.IntVar(&level4Count, "4", 0, "`count` of insane (nearly impossible) games to generate")
+	flag.IntVar(&level0Count, "0", 0, "`count` of trivial games to generate")
+	flag.IntVar(&level1Count, "1", 0, "`count` of tough games to generate")
+	// flag.IntVar(&level2Count, "2", 0, "`count` of diabolical games to generate")
+	// flag.IntVar(&level3Count, "3", 0, "`count` of extreme games to generate")
+	// flag.IntVar(&level4Count, "4", 0, "`count` of insane (nearly impossible) games to generate")
 
 	flag.Var(&input, "i", "`file` containing input patterns (may be repeated)")
 
@@ -68,7 +69,7 @@ func main() {
 	flag.CommandLine.Usage = usage
 	flag.Parse()
 
-	if len(input) > 0 && (level0Count > 0 || level1Count > 0 || level2Count > 0 || level3Count > 0 || level4Count > 0) {
+	if len(input) > 0 && (level0Count > 0 || level1Count > 0 /* || level2Count > 0 || level3Count > 0 || level4Count > 0 */) {
 		usage()
 		os.Exit(1)
 	}
@@ -123,27 +124,44 @@ func main() {
 			log.Printf("solved %d of %d", sol, all)
 		}
 	} else { // Generate puzzles of levels given in -0, -1, -2, -3, -4.
-		grid := generator.Randomize()
-		grid.Display()
-		maxLevel, solved := grid.Reduce()
-		grid.Display()
-		if solved {
-			log.Printf("level: %s, solved", maxLevel)
-		} else {
-			log.Printf("level: %s, not solved", maxLevel)
-			solutions := make([]*generator.Grid, 0)
-			grid.Search(&solutions)
-			switch len(solutions) {
-			case 0:
-				log.Println("still not solved after search")
-			case 1:
-				log.Println("single solution found")
-				solutions[0].Display()
-			default:
-				log.Println("multiple solutions found")
-				for _, s := range solutions {
-					s.Display()
-				}
+		numberOfWorkers := runtime.NumCPU()
+		numberOfTasks := level0Count + level1Count // + level2Count + level3Count + level4Count
+
+		tasks := make(chan generator.Level, numberOfTasks)
+		results := make(chan *generator.Game, numberOfTasks)
+
+		for w := 0; w < numberOfWorkers; w++ {
+			go generator.Worker(tasks, results)
+		}
+
+		for t := 0; t < level0Count; t++ {
+			tasks <- generator.Trivial
+		}
+
+		for t := 0; t < level1Count; t++ {
+			tasks <- generator.Tough
+		}
+
+		// for t := 0; t < level2Count; t++ {
+		// 	tasks <- generator.Diabolical
+		// }
+
+		// for t := 0; t < level3Count; t++ {
+		// 	tasks <- generator.Extreme
+		// }
+
+		// for t := 0; t < level4Count; t++ {
+		// 	tasks <- generator.Insane
+		// }
+
+		close(tasks)
+
+		for t := 0; t < numberOfTasks; t++ {
+			g := <-results
+			if g != nil {
+				log.Printf("%s (%d)", g.Level, g.Filled)
+				g.Puzzle.Display()
+				g.Solution.Display()
 			}
 		}
 	}

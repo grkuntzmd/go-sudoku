@@ -22,8 +22,8 @@ func (g *Grid) hiddenQuad() bool {
 }
 
 func (g *Grid) hiddenQuadGroup(gr *group) (res bool) {
-	for pi, ps := range gr.points {
-		places := g.digitPlaces(ps)
+	for ui, u := range gr.unit {
+		places := g.digitPlaces(u)
 
 		for d1 := 1; d1 <= 9; d1++ {
 			p1 := places[d1]
@@ -68,7 +68,7 @@ func (g *Grid) hiddenQuadGroup(gr *group) (res bool) {
 
 						points := [4]point{}
 						index := 0
-						for pi, p := range ps {
+						for pi, p := range u {
 							if comb&(1<<pi) != 0 {
 								points[index] = p
 								index++
@@ -77,8 +77,8 @@ func (g *Grid) hiddenQuadGroup(gr *group) (res bool) {
 
 						bits := cell(1<<d1 | 1<<d2 | 1<<d3 | 1<<d4)
 						for _, p := range points {
-							if g.pt(p).and(bits) {
-								g.cellChange(&res, "hiddenQuad: in %s %d limits %s (quad: %s, %s, %s, %s) to %s\n", gr.name, pi, &p, &points[0], &points[1], &points[2], &points[3], bits)
+							if g.pt(&p).and(bits) {
+								g.cellChange(&res, "hiddenQuad: in %s %d limits %s (quad: %s, %s, %s, %s) to %s\n", gr.name, ui, &p, &points[0], &points[1], &points[2], &points[3], bits)
 							}
 						}
 					}

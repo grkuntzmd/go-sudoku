@@ -22,20 +22,20 @@ func (g *Grid) nakedSingle() bool {
 }
 
 func (g *Grid) nakedSingleGroup(gr *group) (res bool) {
-	for pi, ps := range gr.points {
-		for _, p1 := range ps {
-			cell := *g.pt(p1)
+	for ui, u := range gr.unit {
+		for _, p1 := range u {
+			cell := *g.pt(&p1)
 			if bitCount[cell] != 1 {
 				continue
 			}
 
-			for _, p2 := range ps {
+			for _, p2 := range u {
 				if p1 == p2 {
 					continue
 				}
 
-				if g.pt(p2).andNot(cell) {
-					g.cellChange(&res, "nakedSingle: in %s %d cell %s allows only %s, removed from %s", gr.name, pi, &p1, cell, &p2)
+				if g.pt(&p2).andNot(cell) {
+					g.cellChange(&res, "nakedSingle: in %s %d cell %s allows only %s, removed from %s", gr.name, ui, &p1, cell, &p2)
 				}
 			}
 		}

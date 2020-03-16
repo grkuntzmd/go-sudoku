@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "/home/grk/Dropbox/projects/rust/sudoku"
 		}
 	],
 	"settings": {}

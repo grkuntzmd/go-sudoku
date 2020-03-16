@@ -23,8 +23,8 @@ func (g *Grid) hiddenPair() bool {
 }
 
 func (g *Grid) hiddenPairGroup(gr *group) (res bool) {
-	for pi, ps := range gr.points {
-		points := g.digitPoints(ps)
+	for ui, u := range gr.unit {
+		points := g.digitPoints(u)
 
 		for d1 := 1; d1 <= 9; d1++ {
 			for d2 := 1; d2 <= 9; d2++ {
@@ -36,8 +36,8 @@ func (g *Grid) hiddenPairGroup(gr *group) (res bool) {
 					comb := cell(1<<d1 | 1<<d2)
 					for k := 0; k < 2; k++ {
 						p := points[d1][k]
-						if g.pt(p).and(comb) {
-							g.cellChange(&res, "hiddenPair: in %s %d limits %s (pair: %s, %s) to %s\n", gr.name, pi, &p, &points[d1][0], &points[d1][1], comb)
+						if g.pt(&p).and(comb) {
+							g.cellChange(&res, "hiddenPair: in %s %d limits %s (pair: %s, %s) to %s\n", gr.name, ui, &p, &points[d1][0], &points[d1][1], comb)
 						}
 					}
 				}

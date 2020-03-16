@@ -22,31 +22,31 @@ func (g *Grid) nakedPair() bool {
 }
 
 func (g *Grid) nakedPairGroup(gr *group) (res bool) {
-	for pi, ps := range gr.points {
+	for ui, u := range gr.unit {
 	outer:
-		for _, p1 := range ps {
-			cell1 := *g.pt(p1)
+		for _, p1 := range u {
+			cell1 := *g.pt(&p1)
 			if bitCount[cell1] != 2 {
 				continue
 			}
 
-			for _, p2 := range ps {
+			for _, p2 := range u {
 				if p1 == p2 {
 					continue
 				}
 
-				cell2 := *g.pt(p2)
+				cell2 := *g.pt(&p2)
 				if cell1 != cell2 {
 					continue
 				}
 
-				for _, p3 := range ps {
+				for _, p3 := range u {
 					if p1 == p3 || p2 == p3 {
 						continue
 					}
 
-					if g.pt(p3).andNot(cell1) {
-						g.cellChange(&res, "nakedPair: in %s %d removed %s from %s", gr.name, pi, cell1, &p3)
+					if g.pt(&p3).andNot(cell1) {
+						g.cellChange(&res, "nakedPair: in %s %d removed %s from %s", gr.name, ui, cell1, &p3)
 					}
 				}
 				continue outer

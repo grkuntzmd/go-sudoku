@@ -19,25 +19,25 @@ package generator
 type Level int
 
 const (
-	Easy Level = iota
-	Medium
-	Hard
-	Ridiculous
-	Insane
+	Trivial Level = iota
+	Tough
+	// Diabolical
+	// Extreme
+	// Insane
 )
 
 func (l Level) String() string {
 	switch l {
-	case Easy:
-		return "Easy"
-	case Medium:
-		return "Medium"
-	case Hard:
-		return "Hard"
-	case Ridiculous:
-		return "Ridiculous"
-	case Insane:
-		return "Insane"
+	case Trivial:
+		return "Trivial"
+	case Tough:
+		return "Tough"
+		// case Diabolical:
+		// 	return "Diabolical"
+		// case Extreme:
+		// 	return "Extreme"
+		// case Insane:
+		// 	return "Insane"
 	}
 
 	return ""

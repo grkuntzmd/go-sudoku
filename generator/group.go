@@ -17,8 +17,8 @@
 package generator
 
 type group struct {
-	name   string
-	points [rows][cols]point
+	name string
+	unit [rows][cols]point
 }
 
 var (
@@ -31,9 +31,9 @@ func init() {
 	for r := 0; r < rows; r++ {
 		for c := 0; c < cols; c++ {
 			p := point{r, c}
-			box.points[boxOf(r, c)][r%3*3+c%3] = p
-			col.points[c][r] = p
-			row.points[r][c] = p
+			box.unit[boxOf(r, c)][r%3*3+c%3] = p
+			col.unit[c][r] = p
+			row.unit[r][c] = p
 		}
 	}
 }
