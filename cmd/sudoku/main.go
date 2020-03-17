@@ -159,7 +159,7 @@ func main() {
 		for t := 0; t < numberOfTasks; t++ {
 			g := <-results
 			if g != nil {
-				log.Printf("%s (%d)", g.Level, g.Filled)
+				log.Printf("%s (%d)", g.Level, g.Clues)
 				g.Puzzle.Display()
 				g.Solution.Display()
 			}

@@ -69,7 +69,7 @@ var (
 func init() {
 	rand.Seed(time.Now().Unix())
 
-	flag.UintVar(&attempts, "a", 10, "maximum `attempts` to generate a puzzle")
+	flag.UintVar(&attempts, "a", 100, "maximum `attempts` to generate a puzzle")
 	flag.BoolVar(&color, "c", false, "colorize the output for ANSI terminals")
 	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 }
@@ -108,20 +108,15 @@ func Randomize() *Grid {
 		}
 	}
 
-	d := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
-	rand.Shuffle(len(d), func(i, j int) { d[i], d[j] = d[j], d[i] })
-	var group [9][9]point
-	switch rand.Intn(3) {
-	case 0:
-		group = box.unit
-	case 1:
-		group = col.unit
-	case 2:
-		group = row.unit
-	}
-
-	for i, p := range group[rand.Intn(9)] {
-		g.cells[p.r][p.c] = 1 << d[i]
+	indexes := []int{0, 1, 2}
+	rand.Shuffle(len(indexes), func(i, j int) { indexes[i], indexes[j] = indexes[j], indexes[i] })
+	for i, index := range indexes {
+		u := i*3 + index
+		d := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+		rand.Shuffle(len(d), func(i, j int) { d[i], d[j] = d[j], d[i] })
+		for pi, p := range box.unit[u] {
+			*g.pt(&p) = 1 << d[pi]
+		}
 	}
 
 	return &g
@@ -320,6 +315,7 @@ func (g *Grid) Reduce() (Level, bool) {
 
 		if g.reduceLevel(&maxLevel, Tough, []func() bool{
 			g.xWing,
+			g.yWing,
 		}) {
 			continue
 		}
@@ -442,68 +438,62 @@ outer:
 			grid := Randomize()
 			solutions := make([]*Grid, 0, 2)
 			grid.Search(&solutions)
-			if len(solutions) == 0 {
+			if len(solutions) == 0 { // The grid has no solution.
 				maxAttempts--
 				if maxAttempts == 0 { // If too many attempts, push a nil and start again with a new level.
 					results <- nil
 					continue outer
 				}
+
+				continue inner
 			}
 
-			solution := solutions[0]
-			points := solution.allPoints()                                                            // Get all points from the first solution.
+			// From https://stackoverflow.com/a/7280517/96233
+
+			*grid = *solutions[0]                                                                     // Copy the first solution
+			points := grid.allPoints()                                                                // Get all points from the first solution.
 			rand.Shuffle(len(points), func(i, j int) { points[i], points[j] = points[j], points[i] }) // Shuffle them.
 
-			// Clear the grid.
-			for r := 0; r < rows; r++ {
-				for c := 0; c < cols; c++ {
-					grid.cells[r][c] = all
-				}
-			}
-
-			// Fill in the first 17 points from the shuffled set. We use 17 points because it is known that the smallest number of cells required to get a unique solution is 17 (https://en.wikipedia.org/wiki/Mathematics_of_Sudoku).
-			for p := 0; p < 17; p++ {
-				point := points[p].point
-				cell := points[p].cell
-				grid.pt(point).setTo(cell)
-				grid.orig[point.r][point.c] = true
+			for len(points) > 0 {
+				curr := points[0]
 				points = points[1:]
-			}
+				*grid.pt(curr.point) = all // Clear the cell.
 
-			// Attempt to solve the grid at the given level. Keep adding points until the level is achieved and there is a unique solution.
-			for {
 				cp := *grid
-
-				l, solved := cp.Reduce()
 				solutions = solutions[:0]
 				cp.Search(&solutions)
 
-				if solved && l == level && len(solutions) == 1 {
-					solution := solutions[0]
-					solution.orig = grid.orig
-					results <- &Game{level, 81 - len(points), grid, solution}
-					continue outer
+				if len(solutions) > 1 { // No longer unique.
+					*grid.pt(curr.point) = curr.cell // Put the value back.
 				}
-
-				if len(points) == 0 { // If there are no more points to add, abort this attempt.
-					maxAttempts--
-					if maxAttempts == 0 { // If too many attempts, push a nil and start again with a new level.
-						results <- nil
-						continue outer
-					}
-
-					continue inner // Otherwise just try a new randomized grid at the same level.
-				}
-
-				// Add the next point from the point slice to the grid and try solving again.
-				point := points[0].point
-				cell := points[0].cell
-				grid.pt(point).setTo(cell)
-				grid.orig[point.r][point.c] = true
-				points = points[1:]
-				continue
 			}
 
+			// At this point, grid contains the smallest solution that is unique. Now we test the level.
+			cp := *grid
+			l, solved := cp.Reduce()
+			solutions = solutions[:0]
+			cp.Search(&solutions)
+			if solved && l == level && len(solutions) == 1 {
+				solution := solutions[0]
+				var clues uint
+				for r := 0; r < rows; r++ {
+					for c := 0; c < cols; c++ {
+						if bitCount[grid.cells[r][c]] == 1 {
+							solution.orig[r][c] = true
+							clues++
+						}
+					}
+				}
+				results <- &Game{level, clues, grid, solution}
+				continue outer
+			}
+
+			// If we could not find a unique solution, try again.
+			maxAttempts--
+			if maxAttempts == 0 { // If too many attempts, push a nil and start again with a new level.
+				results <- nil
+				continue outer
+			}
 		}
 	}
 }

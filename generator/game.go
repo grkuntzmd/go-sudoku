@@ -18,6 +18,6 @@ package generator
 
 type Game struct {
 	Level
-	Filled           int
+	Clues            uint
 	Puzzle, Solution *Grid
 }
