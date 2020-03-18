@@ -19,6 +19,10 @@
 		"prefix": "co",
 		"body": "{ continue }\n"
 	},
+	"debub marker": {
+		"prefix": "DEB",
+		"body": "// DEBUG "
+	},
 	"for all cells": {
 		"prefix": "forcells",
 		"body": [
@@ -40,7 +44,7 @@
 	"group loop": {
 		"prefix": "grouploop",
 		"body": [
-			"for pi, ps := range gr.points {",
+			"for pi, ps := range gr.unit {",
 			"\t$0",
 			"}",
 		]

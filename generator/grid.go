@@ -61,16 +61,16 @@ const (
 )
 
 var (
-	attempts uint
-	color    bool
-	verbose  uint
+	attempts  uint
+	colorized bool
+	verbose   uint
 )
 
 func init() {
 	rand.Seed(time.Now().Unix())
 
 	flag.UintVar(&attempts, "a", 100, "maximum `attempts` to generate a puzzle")
-	flag.BoolVar(&color, "c", false, "colorize the output for ANSI terminals")
+	flag.BoolVar(&colorized, "c", false, "colorize the output for ANSI terminals")
 	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 }
 
@@ -316,6 +316,7 @@ func (g *Grid) Reduce() (Level, bool) {
 		if g.reduceLevel(&maxLevel, Tough, []func() bool{
 			g.xWing,
 			g.yWing,
+			g.singlesChain,
 		}) {
 			continue
 		}
@@ -508,7 +509,7 @@ func center(s string, w int) string {
 
 // colorize adds ANSI escape sequences to display the string in color.
 func colorize(c string, s string) string {
-	if color {
+	if colorized {
 		return fmt.Sprintf("\x1b[%sm%s\x1b[0m", c, s)
 	}
 
