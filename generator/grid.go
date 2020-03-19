@@ -21,6 +21,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"reflect"
+	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -43,21 +46,6 @@ const (
 	rows = 9
 
 	all = 0b1111111110
-
-	botLeft  = "\u2514"
-	botRight = "\u2518"
-	botT     = "\u2534"
-	horizBar = "\u2500"
-	leftT    = "\u251c"
-	plus     = "\u253c"
-	rightT   = "\u2524"
-	topLeft  = "\u250c"
-	topRight = "\u2510"
-	topT     = "\u252c"
-	vertBar  = "\u2502"
-
-	green  = "32"
-	yellow = "33"
 )
 
 var (
@@ -135,16 +123,33 @@ func (g *Grid) allPoints() (res []pointCell) {
 // cellChange is a convenience function that is called by strategy methods when a cell changes value.
 func (g *Grid) cellChange(res *bool, format string, a ...interface{}) {
 	*res = true
-	if verbose >= 1 {
+	if verbose >= 2 {
 		log.Printf(format, a...)
 	}
-	if verbose >= 2 {
+	if verbose >= 3 {
 		g.Display()
 	}
 }
 
 // Display emits a grid to stdout in a framed format.
 func (g *Grid) Display() {
+	const (
+		botLeft  = "\u2514"
+		botRight = "\u2518"
+		botT     = "\u2534"
+		horizBar = "\u2500"
+		leftT    = "\u251c"
+		plus     = "\u253c"
+		rightT   = "\u2524"
+		topLeft  = "\u250c"
+		topRight = "\u2510"
+		topT     = "\u252c"
+		vertBar  = "\u2502"
+
+		green  = "32"
+		yellow = "33"
+	)
+
 	width := g.maxWidth() + 2 // Add 2 for margins.
 	bars := strings.Repeat(horizBar, width*3)
 	line := leftT + strings.Join([]string{bars, bars, bars}, plus) + rightT
@@ -193,7 +198,7 @@ func (g *Grid) Display() {
 }
 
 // digitPlaces returns an array of digits containing values where the bits (1 - 9) are set if the corresponding digit appears in that cell.
-func (g *Grid) digitPlaces(points [9]point) (res [10]cell) {
+func (g *Grid) digitPlaces(points [9]point) (res [10]positions) {
 	for pi, p := range points {
 		cell := *g.pt(&p)
 		for d := 1; d <= 9; d++ {
@@ -286,7 +291,7 @@ func (g *Grid) pt(p *point) *cell {
 }
 
 // Reduce eliminates candidates from cells using logical methods. For example if a cell contains a single digit candidate, that digit can be removed from all other cells in the same box, row, and column.
-func (g *Grid) Reduce() (Level, bool) {
+func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 	maxLevel := Trivial
 
 	if g.emptyCell() {
@@ -298,7 +303,7 @@ func (g *Grid) Reduce() (Level, bool) {
 			return maxLevel, true
 		}
 
-		if g.reduceLevel(&maxLevel, Trivial, []func() bool{
+		if g.reduceLevel(&maxLevel, Trivial, strategies, []func() bool{
 			g.nakedSingle,
 			g.hiddenSingle,
 			g.nakedPair,
@@ -313,23 +318,24 @@ func (g *Grid) Reduce() (Level, bool) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Tough, []func() bool{
+		if g.reduceLevel(&maxLevel, Tough, strategies, []func() bool{
 			g.xWing,
 			g.yWing,
 			g.singlesChain,
+			g.swordfish,
 		}) {
 			continue
 		}
 
-		// if g.reduceLevel(&maxLevel, Diabolical, []func() bool{}) {
+		// if g.reduceLevel(&maxLevel, Diabolical, strategies, []func() bool{}) {
 		// 	continue
 		// }
 
-		// if g.reduceLevel(&maxLevel, Extreme, []func() bool{}) {
+		// if g.reduceLevel(&maxLevel, Extreme, strategies, []func() bool{}) {
 		// 	continue
 		// }
 
-		// if g.reduceLevel(&maxLevel, Insane, []func() bool{}) {
+		// if g.reduceLevel(&maxLevel, Insane, strategies, []func() bool{}) {
 		// 	continue
 		// }
 
@@ -339,9 +345,13 @@ func (g *Grid) Reduce() (Level, bool) {
 	return maxLevel, false
 }
 
-func (g *Grid) reduceLevel(maxLevel *Level, level Level, fs []func() bool) bool {
+func (g *Grid) reduceLevel(maxLevel *Level, level Level, strategies *map[string]bool, fs []func() bool) bool {
 	for _, f := range fs {
 		if f() {
+			if strategies != nil {
+				name := nameOfFunc(f)
+				(*strategies)[name] = true
+			}
 			if *maxLevel < level {
 				*maxLevel = level
 			}
@@ -350,6 +360,20 @@ func (g *Grid) reduceLevel(maxLevel *Level, level Level, fs []func() bool) bool 
 	}
 
 	return false
+}
+
+func nameOfFunc(f func() bool) string {
+	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+	i := strings.LastIndex(name, ".")
+	if i > 0 {
+		name = name[i+1:]
+	}
+	i = strings.LastIndex(name, "-fm")
+	if i > 0 {
+		name = name[:i]
+	}
+
+	return name
 }
 
 // Search uses a brute-force descent to solve the grid and returns a slice of grids that may be empty if no solution was found, may contain a single grid if a unique solution was found, or may contain more than one solution.
@@ -374,7 +398,7 @@ func (g *Grid) Search(solutions *[]*Grid) {
 	for _, d := range digits {
 		cp := *g
 		*cp.pt(&point) = 1 << d
-		_, solved := cp.Reduce()
+		_, solved := cp.Reduce(nil)
 
 		if solved {
 			*solutions = append(*solutions, &cp)
@@ -471,7 +495,8 @@ outer:
 
 			// At this point, grid contains the smallest solution that is unique. Now we test the level.
 			cp := *grid
-			l, solved := cp.Reduce()
+			strategies := make(map[string]bool)
+			l, solved := cp.Reduce(&strategies)
 			solutions = solutions[:0]
 			cp.Search(&solutions)
 			if solved && l == level && len(solutions) == 1 {
@@ -485,7 +510,14 @@ outer:
 						}
 					}
 				}
-				results <- &Game{level, clues, grid, solution}
+
+				var s []string
+				for n := range strategies {
+					s = append(s, n)
+				}
+				sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
+
+				results <- &Game{level, clues, s, grid, solution}
 				continue outer
 			}
 

@@ -16,9 +16,20 @@
 
 package generator
 
-type Game struct {
-	Level
-	Clues            uint
-	Strategies       []string
-	Puzzle, Solution *Grid
+import "fmt"
+
+type positions uint16
+
+func (p positions) places() (res []int) {
+	for i := 0; i < 9; i++ {
+		if p&(1<<i) != 0 {
+			res = append(res, i)
+		}
+	}
+
+	return
+}
+
+func (p positions) String() string {
+	return fmt.Sprintf("%b", p)
 }

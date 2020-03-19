@@ -73,6 +73,7 @@ func (g *Grid) yWing() (res bool) {
 			}
 		}
 	}
+
 	return
 }
 

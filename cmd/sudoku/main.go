@@ -24,6 +24,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"sort"
 	"strings"
 
 	"dogdaze.org/sudoku/generator"
@@ -97,24 +98,32 @@ func main() {
 					continue
 				}
 				grid.Display()
-				maxLevel, solved := grid.Reduce()
+				strategies := make(map[string]bool)
+				maxLevel, solved := grid.Reduce(&strategies)
+
+				var names []string
+				for n := range strategies {
+					names = append(names, n)
+				}
+				sort.Slice(names, func(i, j int) bool { return names[i] < names[j] })
+
 				grid.Display()
 				if solved {
 					sol++
-					log.Printf("level: %s, solved", maxLevel)
+					log.Printf("level: %s, solved, (%s)", maxLevel, strings.Join(names, ", "))
 				} else {
 					log.Printf("level: %s, not solved", maxLevel)
 					solutions := make([]*generator.Grid, 0)
 					grid.Search(&solutions)
 					switch len(solutions) {
 					case 0:
-						log.Println("still not solved after search")
+						log.Printf("still not solved after search, (%s)", strings.Join(names, ", "))
 					case 1:
 						sol++
-						log.Println("single solution found")
+						log.Printf("single solution found, (%s)", strings.Join(names, ", "))
 						solutions[0].Display()
 					default:
-						log.Println("multiple solutions found")
+						log.Printf("multiple solutions found, (%s)", strings.Join(names, ", "))
 						for _, s := range solutions {
 							s.Display()
 						}
@@ -159,7 +168,7 @@ func main() {
 		for t := 0; t < numberOfTasks; t++ {
 			g := <-results
 			if g != nil {
-				log.Printf("%s (%d)", g.Level, g.Clues)
+				log.Printf("%s (%d) %s", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
 				g.Puzzle.Display()
 				g.Solution.Display()
 			}

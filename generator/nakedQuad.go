@@ -91,5 +91,6 @@ func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 			}
 		}
 	}
+
 	return
 }
