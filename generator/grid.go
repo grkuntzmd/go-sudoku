@@ -323,6 +323,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			g.yWing,
 			g.singlesChain,
 			g.swordfish,
+			g.xyzWing,
 		}) {
 			continue
 		}

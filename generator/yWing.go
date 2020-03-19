@@ -26,20 +26,17 @@ func (g *Grid) yWing() (res bool) {
 				continue
 			}
 
-			candidates := g.findCandidates(&p)
-			length := len(candidates)
+			candidates := g.findCandidates(&p, 1)
 
-			for c1i := 0; c1i < length; c1i++ {
-				p1 := candidates[c1i]
+			for c1i, p1 := range candidates {
 				cell1 := *g.pt(&p1)
 				n1 := neighbors(&p1)
 
-				for c2i := 0; c2i < length; c2i++ {
+				for c2i, p2 := range candidates {
 					if c1i == c2i {
 						continue
 					}
 
-					p2 := candidates[c2i]
 					cell2 := *g.pt(&p2)
 
 					if bitCount[cell1|cell2] != 3 || cell&cell1|cell&cell2 != cell {
@@ -51,9 +48,7 @@ func (g *Grid) yWing() (res bool) {
 					var overlap [9][9]bool
 					for r := 0; r < rows; r++ {
 						for c := 0; c < cols; c++ {
-							if n1[r][c] && n2[r][c] {
-								overlap[r][c] = true
-							}
+							overlap[r][c] = n1[r][c] && n2[r][c]
 						}
 					}
 
@@ -77,14 +72,26 @@ func (g *Grid) yWing() (res bool) {
 	return
 }
 
-func (g *Grid) findCandidates(curr *point) (res []point) {
-	res = append(res, g.findCandidatesUnit(&box.unit[boxOf(curr.r, curr.c)], curr)...)
-	res = append(res, g.findCandidatesUnit(&col.unit[curr.c], curr)...)
-	res = append(res, g.findCandidatesUnit(&row.unit[curr.r], curr)...)
+func (g *Grid) findCandidates(curr *point, overlap int) (res []point) {
+	m := make(map[point]bool)
+	for p := range g.findCandidatesUnit(&box.unit[boxOf(curr.r, curr.c)], curr, overlap) {
+		m[p] = true
+	}
+	for p := range g.findCandidatesUnit(&col.unit[curr.c], curr, overlap) {
+		m[p] = true
+	}
+	for p := range g.findCandidatesUnit(&row.unit[curr.r], curr, overlap) {
+		m[p] = true
+	}
+
+	for p := range m {
+		res = append(res, p)
+	}
 	return
 }
 
-func (g *Grid) findCandidatesUnit(u *[9]point, curr *point) (res []point) {
+func (g *Grid) findCandidatesUnit(u *[9]point, curr *point, overlap int) map[point]bool {
+	res := make(map[point]bool)
 	cell := *g.pt(curr)
 	for _, p := range u {
 		if p == *curr {
@@ -92,14 +99,14 @@ func (g *Grid) findCandidatesUnit(u *[9]point, curr *point) (res []point) {
 		}
 
 		candidate := *g.pt(&p)
-		if bitCount[candidate] != 2 || bitCount[cell&candidate] != 1 {
+		if bitCount[candidate] != 2 || bitCount[cell&candidate] != overlap {
 			continue
 		}
 
-		res = append(res, p)
+		res[p] = true
 	}
 
-	return
+	return res
 }
 
 func neighbors(curr *point) *[9][9]bool {
