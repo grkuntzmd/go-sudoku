@@ -24,7 +24,7 @@ func (g *Grid) nakedTriple() bool {
 func (g *Grid) nakedTripleGroup(gr *group) (res bool) {
 	for ui, u := range gr.unit {
 		for _, p1 := range u {
-			cell1 := *g.pt(&p1)
+			cell1 := *g.pt(p1)
 			count := bitCount[cell1]
 			if count == 1 || count > 3 {
 				continue
@@ -35,7 +35,7 @@ func (g *Grid) nakedTripleGroup(gr *group) (res bool) {
 					continue
 				}
 
-				cell2 := *g.pt(&p2)
+				cell2 := *g.pt(p2)
 				count := bitCount[cell2]
 				if count == 1 || count > 3 {
 					continue
@@ -50,7 +50,7 @@ func (g *Grid) nakedTripleGroup(gr *group) (res bool) {
 						continue
 					}
 
-					cell3 := *g.pt(&p3)
+					cell3 := *g.pt(p3)
 					count := bitCount[cell3]
 					if count == 1 || count > 3 {
 						continue
@@ -66,8 +66,8 @@ func (g *Grid) nakedTripleGroup(gr *group) (res bool) {
 							continue
 						}
 
-						if g.pt(&p).andNot(comb) {
-							g.cellChange(&res, "nakedTriple: in %s %d (%s, %s, %s) removing %s from %s\n", gr.name, ui, &p1, &p2, &p3, comb, &p)
+						if g.pt(p).andNot(comb) {
+							g.cellChange(&res, "nakedTriple: in %s %d (%s, %s, %s) removing %s from %s\n", gr.name, ui, p1, p2, p3, comb, p)
 						}
 					}
 				}

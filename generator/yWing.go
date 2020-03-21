@@ -20,30 +20,30 @@ package generator
 func (g *Grid) yWing() (res bool) {
 	for _, u := range box.unit {
 		for _, p := range u { // Traverse all cells, using box units for convenience.
-			cell := *g.pt(&p)
+			cell := *g.pt(p)
 
 			if bitCount[cell] != 2 {
 				continue
 			}
 
-			candidates := g.findCandidates(&p, 1)
+			candidates := g.findYWingCandidates(p, 1)
 
 			for c1i, p1 := range candidates {
-				cell1 := *g.pt(&p1)
-				n1 := neighbors(&p1)
+				cell1 := *g.pt(p1)
+				n1 := neighbors(p1)
 
 				for c2i, p2 := range candidates {
 					if c1i == c2i {
 						continue
 					}
 
-					cell2 := *g.pt(&p2)
+					cell2 := *g.pt(p2)
 
 					if bitCount[cell1|cell2] != 3 || cell&cell1|cell&cell2 != cell {
 						continue
 					}
 
-					n2 := neighbors(&p2)
+					n2 := neighbors(p2)
 
 					var overlap [9][9]bool
 					for r := 0; r < rows; r++ {
@@ -59,7 +59,7 @@ func (g *Grid) yWing() (res bool) {
 							if overlap[r][c] {
 								bits := (cell1 | cell2) &^ cell
 								if (&g.cells[r][c]).andNot(bits) {
-									g.cellChange(&res, "yWing: %s, %s, %s causes clearing %s from (%d, %d)\n", &p, &p1, &p2, bits, r, c)
+									g.cellChange(&res, "yWing: %s, %s, %s causes clearing %s from (%d, %d)\n", p, p1, p2, bits, r, c)
 								}
 							}
 						}
@@ -72,15 +72,15 @@ func (g *Grid) yWing() (res bool) {
 	return
 }
 
-func (g *Grid) findCandidates(curr *point, overlap int) (res []point) {
+func (g *Grid) findYWingCandidates(curr point, overlap int) (res []point) {
 	m := make(map[point]bool)
-	for p := range g.findCandidatesUnit(&box.unit[boxOf(curr.r, curr.c)], curr, overlap) {
+	for p := range g.findYWingCandidatesUnit(&box.unit[boxOf(curr.r, curr.c)], curr, overlap) {
 		m[p] = true
 	}
-	for p := range g.findCandidatesUnit(&col.unit[curr.c], curr, overlap) {
+	for p := range g.findYWingCandidatesUnit(&col.unit[curr.c], curr, overlap) {
 		m[p] = true
 	}
-	for p := range g.findCandidatesUnit(&row.unit[curr.r], curr, overlap) {
+	for p := range g.findYWingCandidatesUnit(&row.unit[curr.r], curr, overlap) {
 		m[p] = true
 	}
 
@@ -90,15 +90,15 @@ func (g *Grid) findCandidates(curr *point, overlap int) (res []point) {
 	return
 }
 
-func (g *Grid) findCandidatesUnit(u *[9]point, curr *point, overlap int) map[point]bool {
+func (g *Grid) findYWingCandidatesUnit(u *[9]point, curr point, overlap int) map[point]bool {
 	res := make(map[point]bool)
 	cell := *g.pt(curr)
 	for _, p := range u {
-		if p == *curr {
+		if p == curr {
 			continue
 		}
 
-		candidate := *g.pt(&p)
+		candidate := *g.pt(p)
 		if bitCount[candidate] != 2 || bitCount[cell&candidate] != overlap {
 			continue
 		}
@@ -109,11 +109,11 @@ func (g *Grid) findCandidatesUnit(u *[9]point, curr *point, overlap int) map[poi
 	return res
 }
 
-func neighbors(curr *point) *[9][9]bool {
+func neighbors(curr point) *[9][9]bool {
 	var res [9][9]bool
 	for _, u := range []*[9]point{&box.unit[boxOf(curr.r, curr.c)], &col.unit[curr.c], &row.unit[curr.r]} {
 		for _, p := range u {
-			if p == *curr {
+			if p == curr {
 				continue
 			}
 

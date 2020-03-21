@@ -36,8 +36,8 @@ func (g *Grid) hiddenPairGroup(gr *group) (res bool) {
 					comb := cell(1<<d1 | 1<<d2)
 					for k := 0; k < 2; k++ {
 						p := points[d1][k]
-						if g.pt(&p).and(comb) {
-							g.cellChange(&res, "hiddenPair: in %s %d limits %s (pair: %s, %s) to %s\n", gr.name, ui, &p, &points[d1][0], &points[d1][1], comb)
+						if g.pt(p).and(comb) {
+							g.cellChange(&res, "hiddenPair: in %s %d limits %s (pair: %s, %s) to %s\n", gr.name, ui, p, points[d1][0], points[d1][1], comb)
 						}
 					}
 				}

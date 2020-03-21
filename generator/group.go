@@ -28,8 +28,8 @@ var (
 )
 
 func init() {
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
 			p := point{r, c}
 			box.unit[boxOf(r, c)][r%3*3+c%3] = p
 			col.unit[c][r] = p
@@ -38,6 +38,6 @@ func init() {
 	}
 }
 
-func boxOf(r, c int) int {
+func boxOf(r, c uint8) uint8 {
 	return r/3*3 + c/3
 }

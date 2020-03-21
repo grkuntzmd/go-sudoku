@@ -26,8 +26,8 @@
 	"for all cells": {
 		"prefix": "forcells",
 		"body": [
-			"for r := 0; r < rows; r++ {",
-			"\tfor c := 0; c < cols; c++ {",
+			"for r := zero; r < rows; r++ {",
+			"\tfor c := zero; c < cols; c++ {",
 			"\t\t$0",
 			"\t}",
 			"}"

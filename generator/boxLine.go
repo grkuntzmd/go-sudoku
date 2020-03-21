@@ -23,18 +23,18 @@ func (g *Grid) boxLine() bool {
 
 func (g *Grid) boxLineGroup(
 	gr *group,
-	major func(*point) int,
-	minor func(*point) int,
+	major func(point) uint8,
+	minor func(point) uint8,
 	boxSel func(int, int) int,
 ) (res bool) {
 	for ui, u := range gr.unit {
 		boxes := [10][3]bool{}
 
 		for _, p := range u {
-			cell := *g.pt(&p)
+			cell := *g.pt(p)
 			for d := 1; d <= 9; d++ {
 				if cell&(1<<d) != 0 {
-					boxes[d][minor(&p)/3] = true
+					boxes[d][minor(p)/3] = true
 				}
 			}
 		}
@@ -54,12 +54,12 @@ func (g *Grid) boxLineGroup(
 			for i := 0; i < 9; i++ {
 				p := box.unit[boxSel(index, ui)][i]
 
-				if major(&p) == major(&u[index]) {
+				if major(p) == major(u[index]) {
 					continue
 				}
 
-				if g.pt(&p).andNot(1 << d) {
-					g.cellChange(&res, "boxLine: all %d's in %s %d appear in box %d removing from %s\n", d, gr.name, ui, boxSel(index, ui), &p)
+				if g.pt(p).andNot(1 << d) {
+					g.cellChange(&res, "boxLine: all %d's in %s %d appear in box %d removing from %s\n", d, gr.name, ui, boxSel(index, ui), p)
 				}
 			}
 		}
@@ -68,10 +68,10 @@ func (g *Grid) boxLineGroup(
 	return
 }
 
-func pointCol(p *point) int {
+func pointCol(p point) uint8 {
 	return p.c
 }
 
-func pointRow(p *point) int {
+func pointRow(p point) uint8 {
 	return p.r
 }

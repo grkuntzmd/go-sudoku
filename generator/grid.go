@@ -19,7 +19,6 @@ package generator
 import (
 	"flag"
 	"fmt"
-	"log"
 	"math/rand"
 	"reflect"
 	"runtime"
@@ -36,7 +35,7 @@ type (
 	}
 
 	pointCell struct {
-		*point
+		point
 		cell
 	}
 )
@@ -44,6 +43,7 @@ type (
 const (
 	cols = 9
 	rows = 9
+	zero = uint8(0)
 
 	all = 0b1111111110
 )
@@ -103,7 +103,7 @@ func Randomize() *Grid {
 		d := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 		rand.Shuffle(len(d), func(i, j int) { d[i], d[j] = d[j], d[i] })
 		for pi, p := range box.unit[u] {
-			*g.pt(&p) = 1 << d[pi]
+			*g.pt(p) = 1 << d[pi]
 		}
 	}
 
@@ -111,9 +111,9 @@ func Randomize() *Grid {
 }
 
 func (g *Grid) allPoints() (res []pointCell) {
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			res = append(res, pointCell{&point{r, c}, g.cells[r][c]})
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
+			res = append(res, pointCell{point{r, c}, g.cells[r][c]})
 		}
 	}
 
@@ -124,7 +124,7 @@ func (g *Grid) allPoints() (res []pointCell) {
 func (g *Grid) cellChange(res *bool, format string, a ...interface{}) {
 	*res = true
 	if verbose >= 2 {
-		log.Printf(format, a...)
+		fmt.Printf(format, a...)
 	}
 	if verbose >= 3 {
 		g.Display()
@@ -200,7 +200,7 @@ func (g *Grid) Display() {
 // digitPlaces returns an array of digits containing values where the bits (1 - 9) are set if the corresponding digit appears in that cell.
 func (g *Grid) digitPlaces(points [9]point) (res [10]positions) {
 	for pi, p := range points {
-		cell := *g.pt(&p)
+		cell := *g.pt(p)
 		for d := 1; d <= 9; d++ {
 			if cell&(1<<d) != 0 {
 				res[d] |= 1 << pi
@@ -213,7 +213,7 @@ func (g *Grid) digitPlaces(points [9]point) (res [10]positions) {
 // digitPoints builds a table of points that contain each digit.
 func (g *Grid) digitPoints(ps [9]point) (res [10][]point) {
 	for _, p := range ps {
-		cell := *g.pt(&p)
+		cell := *g.pt(p)
 		for d := 1; d <= 9; d++ {
 			if cell&(1<<d) != 0 {
 				res[d] = append(res[d], p)
@@ -257,9 +257,9 @@ func (g *Grid) maxWidth() int {
 // minPoint find the non-solved point with the least number of candidates and returns that point and true if found, otherwise it returns false.
 func (g *Grid) minPoint() (p point, found bool) {
 	min := 10
-	minPoints := make([]*point, 0)
-	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
+	minPoints := make([]point, 0)
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
 			cell := g.cells[r][c]
 			count := bitCount[cell]
 			if count > 1 {
@@ -267,10 +267,10 @@ func (g *Grid) minPoint() (p point, found bool) {
 				if count < min {
 					min = count
 					minPoints = minPoints[:0]
-					minPoints = append(minPoints, &p)
+					minPoints = append(minPoints, p)
 					found = true
 				} else if count == min {
-					minPoints = append(minPoints, &p)
+					minPoints = append(minPoints, p)
 					found = true
 				}
 			}
@@ -279,14 +279,14 @@ func (g *Grid) minPoint() (p point, found bool) {
 
 	if found {
 		rand.Shuffle(len(minPoints), func(i, j int) { minPoints[i], minPoints[j] = minPoints[j], minPoints[i] })
-		return *minPoints[0], true
+		return minPoints[0], true
 	}
 
 	return
 }
 
 // pt returns the cell at a given point.
-func (g *Grid) pt(p *point) *cell {
+func (g *Grid) pt(p point) *cell {
 	return &g.cells[p.r][p.c]
 }
 
@@ -328,9 +328,11 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			continue
 		}
 
-		// if g.reduceLevel(&maxLevel, Diabolical, strategies, []func() bool{}) {
-		// 	continue
-		// }
+		if g.reduceLevel(&maxLevel, Diabolical, strategies, []func() bool{
+			g.xCycles,
+		}) {
+			continue
+		}
 
 		// if g.reduceLevel(&maxLevel, Extreme, strategies, []func() bool{}) {
 		// 	continue
@@ -393,12 +395,12 @@ func (g *Grid) Search(solutions *[]*Grid) {
 		return
 	}
 
-	digits := g.pt(&point).digits()
+	digits := g.pt(point).digits()
 	rand.Shuffle(len(digits), func(i, j int) { digits[i], digits[j] = digits[j], digits[i] })
 
 	for _, d := range digits {
 		cp := *g
-		*cp.pt(&point) = 1 << d
+		*cp.pt(point) = 1 << d
 		_, solved := cp.Reduce(nil)
 
 		if solved {
@@ -427,10 +429,10 @@ func (g *Grid) solvedGroup(gr *group) bool {
 	for _, ps := range gr.unit {
 		cells := [10]int{}
 		for _, p := range ps {
-			cell := *g.pt(&p)
+			cell := *g.pt(p)
 
 			if g.orig[p.r][p.c] && bitCount[cell] != 1 {
-				log.Panicf("changed original cell (%d, %d) to %#b", p.r, p.c, cell)
+				panic(fmt.Sprintf("changed original cell (%d, %d) to %#b", p.r, p.c, cell))
 			}
 
 			if cell == 0 {

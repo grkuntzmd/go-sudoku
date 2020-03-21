@@ -72,24 +72,24 @@ func (g *Grid) singlesChain() (res bool) {
 			// Search for "Twice in a unit".
 			if g.twiceInAUnit(blues) {
 				for _, p := range blues {
-					if g.pt(&p).andNot(1 << d) {
-						g.cellChange(&res, "singlesChain: in %s, removing %d for twice in a unit", &p, d)
+					if g.pt(p).andNot(1 << d) {
+						g.cellChange(&res, "singlesChain: in %s, removing %d for twice in a unit\n", p, d)
 					}
 				}
 			} else if g.twiceInAUnit(reds) {
 				for _, p := range reds {
-					if g.pt(&p).andNot(1 << d) {
-						g.cellChange(&res, "singlesChain: in %s, removing %d for twice in a unit", &p, d)
+					if g.pt(p).andNot(1 << d) {
+						g.cellChange(&res, "singlesChain: in %s, removing %d for twice in a unit\n", p, d)
 					}
 				}
 			}
 
 			// Search for "Two colors elsewhere".
-			for r := 0; r < rows; r++ {
-				for c := 0; c < cols; c++ {
+			for r := zero; r < rows; r++ {
+				for c := zero; c < cols; c++ {
 					p := point{r, c}
 
-					if *g.pt(&p)&(1<<d) == 0 {
+					if *g.pt(p)&(1<<d) == 0 {
 						continue
 					}
 
@@ -114,8 +114,8 @@ func (g *Grid) singlesChain() (res bool) {
 					}
 
 					if seesBlue != nil && seesRed != nil {
-						if g.pt(&p).andNot(1 << d) {
-							g.cellChange(&res, "singlesChain: in %s, removing %d for two colors elsewhere (%s, %s)", &p, d, seesBlue, seesRed)
+						if g.pt(p).andNot(1 << d) {
+							g.cellChange(&res, "singlesChain: in %s, removing %d for two colors elsewhere (%s, %s)\n", p, d, *seesBlue, *seesRed)
 						}
 					}
 				}

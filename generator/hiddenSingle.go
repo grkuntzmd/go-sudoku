@@ -28,8 +28,8 @@ func (g *Grid) hiddenSingleGroup(gr *group) (res bool) {
 		for d := 1; d <= 9; d++ {
 			if len(points[d]) == 1 {
 				p := points[d][0]
-				if g.pt(&p).setTo(1 << d) {
-					g.cellChange(&res, "hiddenSingle: in %s %d set %s to %d", gr.name, ui, &p, d)
+				if g.pt(p).setTo(1 << d) {
+					g.cellChange(&res, "hiddenSingle: in %s %d set %s to %d\n", gr.name, ui, p, d)
 				}
 			}
 		}

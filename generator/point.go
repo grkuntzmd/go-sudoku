@@ -19,10 +19,10 @@ package generator
 import "fmt"
 
 type point struct {
-	r, c int
+	r, c uint8
 }
 
-func (p *point) String() string {
+func (p point) String() string {
 	return fmt.Sprintf("(%d, %d)", p.r, p.c)
 }
 

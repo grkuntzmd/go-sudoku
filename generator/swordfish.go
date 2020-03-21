@@ -54,8 +54,8 @@ func (g *Grid) swordfishGroup(gr *group) (res bool) {
 						}
 
 						for _, p := range places {
-							if g.pt(&ps[p]).andNot(1 << d) {
-								g.cellChange(&res, "swordfish: (%d, %d, %d), in %s %d, removing %d from position %d", p1i, p2i, p3i, gr.name, pi, d, p)
+							if g.pt(ps[p]).andNot(1 << d) {
+								g.cellChange(&res, "swordfish: (%d, %d, %d), in %s %d, removing %d from position %d\n", p1i, p2i, p3i, gr.name, pi, d, p)
 							}
 						}
 					}

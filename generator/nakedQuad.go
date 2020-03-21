@@ -25,7 +25,7 @@ func (g *Grid) nakedQuad() bool {
 func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 	for ui, u := range gr.unit {
 		for _, p1 := range u {
-			cell1 := *g.pt(&p1)
+			cell1 := *g.pt(p1)
 			count := bitCount[cell1]
 			if count == 1 || count > 4 {
 				continue
@@ -36,7 +36,7 @@ func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 					continue
 				}
 
-				cell2 := *g.pt(&p2)
+				cell2 := *g.pt(p2)
 				count := bitCount[cell2]
 				if count == 1 || count > 4 {
 					continue
@@ -51,7 +51,7 @@ func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 						continue
 					}
 
-					cell3 := *g.pt(&p3)
+					cell3 := *g.pt(p3)
 					count := bitCount[cell3]
 					if count == 1 || count > 4 {
 						continue
@@ -66,7 +66,7 @@ func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 							continue
 						}
 
-						cell4 := *g.pt(&p4)
+						cell4 := *g.pt(p4)
 						count := bitCount[cell4]
 						if count == 1 || count > 4 {
 							continue
@@ -82,8 +82,8 @@ func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 								continue
 							}
 
-							if g.pt(&p).andNot(comb) {
-								g.cellChange(&res, "nakedQuad: in %s %d (%s, %s, %s, %s) removing %s from %s\n", gr.name, ui, &p1, &p2, &p3, &p4, comb, &p)
+							if g.pt(p).andNot(comb) {
+								g.cellChange(&res, "nakedQuad: in %s %d (%s, %s, %s, %s) removing %s from %s\n", gr.name, ui, p1, p2, p3, p4, comb, p)
 							}
 						}
 					}

@@ -24,7 +24,7 @@ func (g *Grid) nakedSingle() bool {
 func (g *Grid) nakedSingleGroup(gr *group) (res bool) {
 	for ui, u := range gr.unit {
 		for _, p1 := range u {
-			cell := *g.pt(&p1)
+			cell := *g.pt(p1)
 			if bitCount[cell] != 1 {
 				continue
 			}
@@ -34,8 +34,8 @@ func (g *Grid) nakedSingleGroup(gr *group) (res bool) {
 					continue
 				}
 
-				if g.pt(&p2).andNot(cell) {
-					g.cellChange(&res, "nakedSingle: in %s %d cell %s allows only %s, removed from %s", gr.name, ui, &p1, cell, &p2)
+				if g.pt(p2).andNot(cell) {
+					g.cellChange(&res, "nakedSingle: in %s %d cell %s allows only %s, removed from %s\n", gr.name, ui, p1, cell, p2)
 				}
 			}
 		}

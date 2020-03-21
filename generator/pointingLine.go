@@ -18,21 +18,21 @@ package generator
 
 // pointingLine removes candidates. When a candidate within a box appears only in a single column or row, that candidate can be removed from all cells in the column or row outside of the box. It returns true if it changes any cells.
 func (g *Grid) pointingLine() bool {
-	return g.pointingLineGroup("col", func(p *point) *[9]point {
+	return g.pointingLineGroup("col", func(p point) *[9]point {
 		return &col.unit[p.c]
-	}, func(p *point) int {
+	}, func(p point) uint8 {
 		return p.c
-	}) || g.pointingLineGroup("row", func(p *point) *[9]point {
+	}) || g.pointingLineGroup("row", func(p point) *[9]point {
 		return &row.unit[p.r]
-	}, func(p *point) int {
+	}, func(p point) uint8 {
 		return p.r
 	})
 }
 
 func (g *Grid) pointingLineGroup(
 	gr string,
-	sel func(*point) *[9]point,
-	axis func(*point) int,
+	sel func(point) *[9]point,
+	axis func(point) uint8,
 ) (res bool) {
 	for ui, u := range box.unit {
 		points := g.digitPoints(u)
@@ -44,20 +44,20 @@ func (g *Grid) pointingLineGroup(
 				return false
 			}
 
-			a := axis(&points[d][0])
+			a := axis(points[d][0])
 			for _, p := range points[d][1:] {
-				if axis(&p) != a { // All points for each digit must be on the same axis (row or column).
+				if axis(p) != a { // All points for each digit must be on the same axis (row or column).
 					continue outer
 				}
 			}
 
-			for _, p := range sel(&points[d][0]) {
-				if p.r/3*3+p.c/3 == ui { // If the point is on the axis (row or column) of interest, skip it.
+			for _, p := range sel(points[d][0]) {
+				if int(p.r/3*3+p.c/3) == ui { // If the point is on the axis (row or column) of interest, skip it.
 					continue
 				}
 
-				if g.pt(&p).andNot(1 << d) {
-					g.cellChange(&res, "pointingLine: in box %d removing %d from %s along %s %d\n", ui, d, &p, gr, a)
+				if g.pt(p).andNot(1 << d) {
+					g.cellChange(&res, "pointingLine: in box %d removing %d from %s along %s %d\n", ui, d, p, gr, a)
 				}
 			}
 		}

@@ -25,7 +25,7 @@ func (g *Grid) xWingGroup(majorGroup, minorGroup *group) (res bool) {
 	var digits [9][10]cell
 	for ui, u := range majorGroup.unit {
 		for pi, p := range u {
-			cell := *g.pt(&p)
+			cell := *g.pt(p)
 			for d := 1; d <= 9; d++ {
 				if cell&(1<<d) != 0 {
 					digits[ui][d] |= 1 << pi
@@ -50,9 +50,9 @@ func (g *Grid) xWingGroup(majorGroup, minorGroup *group) (res bool) {
 									continue
 								}
 
-								if g.pt(&m).andNot(1 << d) {
+								if g.pt(m).andNot(1 << d) {
 									g.cellChange(&res, "xWing: in %ss %d and %d, %d appears only in %s %d and 1 other; "+
-										"removing from %s\n", majorGroup.name, c1i, c2i, d, minorGroup.name, minor, &m)
+										"removing from %s\n", majorGroup.name, c1i, c2i, d, minorGroup.name, minor, m)
 								}
 							}
 						}

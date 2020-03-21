@@ -40,7 +40,7 @@ var (
 
 	level0Count int
 	level1Count int
-	// level2Count int
+	level2Count int
 	// level3Count int
 	// level4Count int
 
@@ -50,7 +50,7 @@ var (
 func init() {
 	flag.IntVar(&level0Count, "0", 0, "`count` of trivial games to generate")
 	flag.IntVar(&level1Count, "1", 0, "`count` of tough games to generate")
-	// flag.IntVar(&level2Count, "2", 0, "`count` of diabolical games to generate")
+	flag.IntVar(&level2Count, "2", 0, "`count` of diabolical games to generate")
 	// flag.IntVar(&level3Count, "3", 0, "`count` of extreme games to generate")
 	// flag.IntVar(&level4Count, "4", 0, "`count` of insane (nearly impossible) games to generate")
 
@@ -70,7 +70,7 @@ func main() {
 	flag.CommandLine.Usage = usage
 	flag.Parse()
 
-	if len(input) > 0 && (level0Count > 0 || level1Count > 0 /* || level2Count > 0 || level3Count > 0 || level4Count > 0 */) {
+	if len(input) > 0 && (level0Count > 0 || level1Count > 0 || level2Count > 0 /* || level3Count > 0 || level4Count > 0 */) {
 		usage()
 		os.Exit(1)
 	}
@@ -134,7 +134,7 @@ func main() {
 		}
 	} else { // Generate puzzles of levels given in -0, -1, -2, -3, -4.
 		numberOfWorkers := runtime.NumCPU()
-		numberOfTasks := level0Count + level1Count // + level2Count + level3Count + level4Count
+		numberOfTasks := level0Count + level1Count + level2Count // + level3Count + level4Count
 
 		tasks := make(chan generator.Level, numberOfTasks)
 		results := make(chan *generator.Game, numberOfTasks)
@@ -151,9 +151,9 @@ func main() {
 			tasks <- generator.Tough
 		}
 
-		// for t := 0; t < level2Count; t++ {
-		// 	tasks <- generator.Diabolical
-		// }
+		for t := 0; t < level2Count; t++ {
+			tasks <- generator.Diabolical
+		}
 
 		// for t := 0; t < level3Count; t++ {
 		// 	tasks <- generator.Extreme

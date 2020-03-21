@@ -25,7 +25,7 @@ func (g *Grid) nakedPairGroup(gr *group) (res bool) {
 	for ui, u := range gr.unit {
 	outer:
 		for _, p1 := range u {
-			cell1 := *g.pt(&p1)
+			cell1 := *g.pt(p1)
 			if bitCount[cell1] != 2 {
 				continue
 			}
@@ -35,7 +35,7 @@ func (g *Grid) nakedPairGroup(gr *group) (res bool) {
 					continue
 				}
 
-				cell2 := *g.pt(&p2)
+				cell2 := *g.pt(p2)
 				if cell1 != cell2 {
 					continue
 				}
@@ -45,8 +45,8 @@ func (g *Grid) nakedPairGroup(gr *group) (res bool) {
 						continue
 					}
 
-					if g.pt(&p3).andNot(cell1) {
-						g.cellChange(&res, "nakedPair: in %s %d removed %s from %s", gr.name, ui, cell1, &p3)
+					if g.pt(p3).andNot(cell1) {
+						g.cellChange(&res, "nakedPair: in %s %d removed %s from %s\n", gr.name, ui, cell1, p3)
 					}
 				}
 				continue outer

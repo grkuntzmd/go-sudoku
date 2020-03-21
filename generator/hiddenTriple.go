@@ -66,8 +66,8 @@ func (g *Grid) hiddenTripleGroup(gr *group) (res bool) {
 
 					bits := cell(1<<d1 | 1<<d2 | 1<<d3)
 					for _, p := range points {
-						if g.pt(&p).and(bits) {
-							g.cellChange(&res, "hiddenTriple: in %s %d limits %s (triple: %s, %s, %s) to %s\n", gr.name, ui, &p, &points[0], &points[1], &points[2], bits)
+						if g.pt(p).and(bits) {
+							g.cellChange(&res, "hiddenTriple: in %s %d limits %s (triple: %s, %s, %s) to %s\n", gr.name, ui, p, points[0], points[1], points[2], bits)
 						}
 					}
 				}

@@ -21,7 +21,7 @@ type Level int
 const (
 	Trivial Level = iota
 	Tough
-	// Diabolical
+	Diabolical
 	// Extreme
 	// Insane
 )
@@ -32,8 +32,8 @@ func (l Level) String() string {
 		return "Trivial"
 	case Tough:
 		return "Tough"
-		// case Diabolical:
-		// 	return "Diabolical"
+	case Diabolical:
+		return "Diabolical"
 		// case Extreme:
 		// 	return "Extreme"
 		// case Insane:
