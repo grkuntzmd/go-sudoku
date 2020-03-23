@@ -16,20 +16,6 @@
 
 package generator
 
-type (
-	color uint8
-
-	pair struct {
-		left, right point
-	}
-)
-
-const (
-	black color = iota
-	red
-	blue
-)
-
 // singlesChain removes candidates by two methods. Prior to removing any candidates, chains are created between cells that contain the only two occurances of a digit in a unit (box, row, or column). The chains connect the units together through the doubly occurring digits. Starting at an arbitrary location in the chain, the cells are alternately colored with two different colors. "Twice in a unit": if the same color occurs twice in a single unit, all cells marked with that color anywhere in the puzzle can be removed. "Two colors elsewhere": if a non-chain cell containing the digit can "see" two cells colored with opposite colors, the digit can be removing from the non-chain cell.
 func (g *Grid) singlesChain() (res bool) {
 	// Create a pairs set containing cells where the cells contain the only two occurrances of a digit in the unit. We use a set so that the pairs are unique.
@@ -140,34 +126,6 @@ func (g *Grid) twiceInAUnit(colors []point) bool {
 	}
 
 	return false
-}
-
-func (g *Grid) unitPairs(pairMaps *[10]map[pair]bool) {
-	g.unitPairsGroup(&box, pairMaps)
-	g.unitPairsGroup(&col, pairMaps)
-	g.unitPairsGroup(&row, pairMaps)
-}
-
-func (g *Grid) unitPairsGroup(gr *group, pairMaps *[10]map[pair]bool) {
-	for _, ps := range gr.unit {
-		digits := g.digitPoints(ps)
-
-		for d := uint16(1); d <= 9; d++ {
-			points := digits[d]
-			if len(points) != 2 {
-				continue
-			}
-
-			if g.orig[points[0].r][points[0].c] || g.orig[points[1].r][points[1].c] {
-				continue
-			}
-
-			if (*pairMaps)[d] == nil {
-				(*pairMaps)[d] = make(map[pair]bool)
-			}
-			(*pairMaps)[d][pair{points[0], points[1]}] = true
-		}
-	}
 }
 
 func setColors(p pair, colors *map[point]color, pairMap *map[pair]bool, colorBoth bool) bool {

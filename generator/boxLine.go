@@ -67,11 +67,3 @@ func (g *Grid) boxLineGroup(
 
 	return
 }
-
-func pointCol(p point) uint8 {
-	return p.c
-}
-
-func pointRow(p point) uint8 {
-	return p.r
-}

@@ -77,3 +77,13 @@ func (c cell) String() string {
 	}
 	return b.String()
 }
+
+func (c cell) lowestSetBit() int {
+	for d := 1; d <= 9; d++ {
+		if c&(1<<d) != 0 {
+			return d
+		}
+	}
+
+	return 0
+}

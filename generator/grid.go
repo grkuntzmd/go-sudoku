@@ -292,10 +292,10 @@ func (g *Grid) pt(p point) *cell {
 
 // Reduce eliminates candidates from cells using logical methods. For example if a cell contains a single digit candidate, that digit can be removed from all other cells in the same box, row, and column.
 func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
-	maxLevel := Trivial
+	maxLevel := Easy
 
 	if g.emptyCell() {
-		return Trivial, false
+		return Easy, false
 	}
 
 	for {
@@ -303,7 +303,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			return maxLevel, true
 		}
 
-		if g.reduceLevel(&maxLevel, Trivial, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Easy, strategies, []func() bool{
 			g.nakedSingle,
 			g.hiddenSingle,
 			g.nakedPair,
@@ -330,6 +330,8 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 
 		if g.reduceLevel(&maxLevel, Diabolical, strategies, []func() bool{
 			g.xCycles,
+			g.medusa,
+			g.jellyfish,
 		}) {
 			continue
 		}

@@ -108,18 +108,3 @@ func (g *Grid) findYWingCandidatesUnit(u *[9]point, curr point, overlap int) map
 
 	return res
 }
-
-func neighbors(curr point) *[9][9]bool {
-	var res [9][9]bool
-	for _, u := range []*[9]point{&box.unit[boxOf(curr.r, curr.c)], &col.unit[curr.c], &row.unit[curr.r]} {
-		for _, p := range u {
-			if p == curr {
-				continue
-			}
-
-			res[p.r][p.c] = true
-		}
-	}
-
-	return &res
-}

@@ -48,7 +48,7 @@ var (
 )
 
 func init() {
-	flag.IntVar(&level0Count, "0", 0, "`count` of trivial games to generate")
+	flag.IntVar(&level0Count, "0", 0, "`count` of easy games to generate")
 	flag.IntVar(&level1Count, "1", 0, "`count` of tough games to generate")
 	flag.IntVar(&level2Count, "2", 0, "`count` of diabolical games to generate")
 	// flag.IntVar(&level3Count, "3", 0, "`count` of extreme games to generate")
@@ -112,7 +112,7 @@ func main() {
 					sol++
 					log.Printf("level: %s, solved, (%s)", maxLevel, strings.Join(names, ", "))
 				} else {
-					log.Printf("level: %s, not solved", maxLevel)
+					log.Printf("level: %s, not solved (%s)", maxLevel, strings.Join(names, ", "))
 					solutions := make([]*generator.Grid, 0)
 					grid.Search(&solutions)
 					switch len(solutions) {
@@ -144,7 +144,7 @@ func main() {
 		}
 
 		for t := 0; t < level0Count; t++ {
-			tasks <- generator.Trivial
+			tasks <- generator.Easy
 		}
 
 		for t := 0; t < level1Count; t++ {

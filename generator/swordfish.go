@@ -16,7 +16,7 @@
 
 package generator
 
-// swordfish find and removes candidates. A swordfish is a 3 by 3 nine-cell pattern, where is in each column (or row), a candidate is only found in three different rows (or columns). The candidate can be removed from all other columns (or row) that line up with the three rows.
+// swordfish finds and removes candidates. A swordfish is a 3 by 3 nine-cell pattern, where is in each column (or row), a candidate is only found in three different rows (or columns). The candidate can be removed from all other columns (or row) that line up with the three rows.
 func (g *Grid) swordfish() bool {
 	return g.swordfishGroup(&col) || g.swordfishGroup(&row)
 }
@@ -47,7 +47,7 @@ func (g *Grid) swordfishGroup(gr *group) (res bool) {
 						continue
 					}
 
-					places := d1.places()
+					places := (d1 | d2 | d3).places()
 					for pi, ps := range gr.unit {
 						if p1i == pi || p2i == pi || p3i == pi {
 							continue
@@ -55,7 +55,7 @@ func (g *Grid) swordfishGroup(gr *group) (res bool) {
 
 						for _, p := range places {
 							if g.pt(ps[p]).andNot(1 << d) {
-								g.cellChange(&res, "swordfish: (%d, %d, %d), in %s %d, removing %d from position %d\n", p1i, p2i, p3i, gr.name, pi, d, p)
+								g.cellChange(&res, "swordfish: (%d, %d, %d), in %s %d, removing %d from position %d (%s)\n", p1i, p2i, p3i, gr.name, pi, d, p, ps[p])
 							}
 						}
 					}
