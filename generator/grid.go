@@ -318,7 +318,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Tough, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Standard, strategies, []func() bool{
 			g.xWing,
 			g.yWing,
 			g.singlesChain,
@@ -328,7 +328,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Diabolical, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Hard, strategies, []func() bool{
 			g.xCycles,
 			g.medusa,
 			g.jellyfish,
@@ -336,13 +336,15 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			continue
 		}
 
-		// if g.reduceLevel(&maxLevel, Extreme, strategies, []func() bool{}) {
-		// 	continue
-		// }
+		if g.reduceLevel(&maxLevel, Expert, strategies, []func() bool{
+			g.skLoops,
+		}) {
+			continue
+		}
 
-		// if g.reduceLevel(&maxLevel, Insane, strategies, []func() bool{}) {
-		// 	continue
-		// }
+		if g.reduceLevel(&maxLevel, Extreme, strategies, []func() bool{}) {
+			continue
+		}
 
 		break
 	}

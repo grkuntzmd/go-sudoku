@@ -20,12 +20,12 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
 	"dogdaze.org/sudoku/generator"
 )
@@ -41,7 +41,7 @@ var (
 	level0Count int
 	level1Count int
 	level2Count int
-	// level3Count int
+	level3Count int
 	// level4Count int
 
 	input inputs
@@ -49,10 +49,10 @@ var (
 
 func init() {
 	flag.IntVar(&level0Count, "0", 0, "`count` of easy games to generate")
-	flag.IntVar(&level1Count, "1", 0, "`count` of tough games to generate")
-	flag.IntVar(&level2Count, "2", 0, "`count` of diabolical games to generate")
-	// flag.IntVar(&level3Count, "3", 0, "`count` of extreme games to generate")
-	// flag.IntVar(&level4Count, "4", 0, "`count` of insane (nearly impossible) games to generate")
+	flag.IntVar(&level1Count, "1", 0, "`count` of standard games to generate")
+	flag.IntVar(&level2Count, "2", 0, "`count` of hard games to generate")
+	flag.IntVar(&level3Count, "3", 0, "`count` of expert games to generate")
+	// flag.IntVar(&level4Count, "4", 0, "`count` of extreme (nearly impossible) games to generate")
 
 	flag.Var(&input, "i", "`file` containing input patterns (may be repeated)")
 
@@ -70,7 +70,7 @@ func main() {
 	flag.CommandLine.Usage = usage
 	flag.Parse()
 
-	if len(input) > 0 && (level0Count > 0 || level1Count > 0 || level2Count > 0 /* || level3Count > 0 || level4Count > 0 */) {
+	if len(input) > 0 && (level0Count > 0 || level1Count > 0 || level2Count > 0 || level3Count > 0 /* || level4Count > 0 */) {
 		usage()
 		os.Exit(1)
 	}
@@ -90,7 +90,7 @@ func main() {
 			for s.Scan() {
 				all++
 				line := s.Text()
-				log.Printf("Encoded: %s", line)
+				fmt.Printf("Encoded: %s\n", line)
 
 				grid, err := generator.ParseEncoded(line)
 				if err != nil {
@@ -99,6 +99,7 @@ func main() {
 				}
 				grid.Display()
 				strategies := make(map[string]bool)
+				start := time.Now()
 				maxLevel, solved := grid.Reduce(&strategies)
 
 				var names []string
@@ -110,27 +111,27 @@ func main() {
 				grid.Display()
 				if solved {
 					sol++
-					log.Printf("level: %s, solved, (%s)", maxLevel, strings.Join(names, ", "))
+					fmt.Printf("level: %s, solved, (%s) in %d milliseconds\n", maxLevel, strings.Join(names, ", "), time.Since(start).Milliseconds())
 				} else {
-					log.Printf("level: %s, not solved (%s)", maxLevel, strings.Join(names, ", "))
+					fmt.Printf("level: %s, not solved (%s) in %d milliseconds\n", maxLevel, strings.Join(names, ", "), time.Since(start).Milliseconds())
 					solutions := make([]*generator.Grid, 0)
 					grid.Search(&solutions)
 					switch len(solutions) {
 					case 0:
-						log.Printf("still not solved after search, (%s)", strings.Join(names, ", "))
+						fmt.Printf("still not solved after search, (%s) in %d milliseconds\n", strings.Join(names, ", "), time.Since(start).Milliseconds())
 					case 1:
 						sol++
-						log.Printf("single solution found, (%s)", strings.Join(names, ", "))
+						fmt.Printf("single solution found, (%s) in %d milliseconds\n", strings.Join(names, ", "), time.Since(start).Milliseconds())
 						solutions[0].Display()
 					default:
-						log.Printf("multiple solutions found, (%s)", strings.Join(names, ", "))
+						fmt.Printf("multiple solutions found, (%s) in %d milliseconds\n", strings.Join(names, ", "), time.Since(start).Milliseconds())
 						for _, s := range solutions {
 							s.Display()
 						}
 					}
 				}
 			}
-			log.Printf("solved %d of %d", sol, all)
+			fmt.Printf("solved %d of %d\n", sol, all)
 		}
 	} else { // Generate puzzles of levels given in -0, -1, -2, -3, -4.
 		numberOfWorkers := runtime.NumCPU()
@@ -148,16 +149,16 @@ func main() {
 		}
 
 		for t := 0; t < level1Count; t++ {
-			tasks <- generator.Tough
+			tasks <- generator.Standard
 		}
 
 		for t := 0; t < level2Count; t++ {
-			tasks <- generator.Diabolical
+			tasks <- generator.Hard
 		}
 
-		// for t := 0; t < level3Count; t++ {
-		// 	tasks <- generator.Extreme
-		// }
+		for t := 0; t < level3Count; t++ {
+			tasks <- generator.Expert
+		}
 
 		// for t := 0; t < level4Count; t++ {
 		// 	tasks <- generator.Insane
@@ -168,7 +169,7 @@ func main() {
 		for t := 0; t < numberOfTasks; t++ {
 			g := <-results
 			if g != nil {
-				log.Printf("%s (%d) %s", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
+				fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
 				g.Puzzle.Display()
 				g.Solution.Display()
 			}

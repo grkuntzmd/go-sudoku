@@ -20,24 +20,24 @@ type Level int
 
 const (
 	Easy Level = iota
-	Tough
-	Diabolical
-	// Extreme
-	// Insane
+	Standard
+	Hard
+	Expert
+	Extreme
 )
 
 func (l Level) String() string {
 	switch l {
 	case Easy:
 		return "Easy"
-	case Tough:
-		return "Tough"
-	case Diabolical:
-		return "Diabolical"
-		// case Extreme:
-		// 	return "Extreme"
-		// case Insane:
-		// 	return "Insane"
+	case Standard:
+		return "Standard"
+	case Hard:
+		return "Hard"
+	case Expert:
+		return "Expert"
+	case Extreme:
+		return "Extreme"
 	}
 
 	return ""

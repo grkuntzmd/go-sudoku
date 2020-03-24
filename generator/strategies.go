@@ -69,6 +69,18 @@ func (c color) String() string {
 	}
 }
 
+func coloredNeighbors(d int, curr point, influence *[rows][cols][10]bool) {
+	for _, u := range []*[9]point{&box.unit[boxOf(curr.r, curr.c)], &col.unit[curr.c], &row.unit[curr.r]} {
+		for _, p := range u {
+			if p == curr {
+				continue
+			}
+
+			(*influence)[p.r][p.c][d] = true
+		}
+	}
+}
+
 func flipColor(c color) color {
 	switch c {
 	case blue:

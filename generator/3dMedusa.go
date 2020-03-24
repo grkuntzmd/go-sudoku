@@ -144,10 +144,10 @@ func (g *Grid) medusa() (res bool) {
 					switch colors[r][c][d] {
 					case blue:
 						immune[r][c][d] = true // Cells that are part of the 3d medusa are not eligible for removal.
-						medusaNeighbors(d, point{r, c}, &blueInfluence)
+						coloredNeighbors(d, point{r, c}, &blueInfluence)
 					case red:
 						immune[r][c][d] = true // Cells that are part of the 3d medusa are not eligible for removal.
-						medusaNeighbors(d, point{r, c}, &redInfluence)
+						coloredNeighbors(d, point{r, c}, &redInfluence)
 					}
 				}
 			}
@@ -340,16 +340,4 @@ func canSeeColor(d int, curr point, c color, colors *[rows][cols][10]color) bool
 	}
 
 	return false
-}
-
-func medusaNeighbors(d int, curr point, influence *[rows][cols][10]bool) {
-	for _, u := range []*[9]point{&box.unit[boxOf(curr.r, curr.c)], &col.unit[curr.c], &row.unit[curr.r]} {
-		for _, p := range u {
-			if p == curr {
-				continue
-			}
-
-			(*influence)[p.r][p.c][d] = true
-		}
-	}
 }
