@@ -135,7 +135,7 @@ func main() {
 		}
 	} else { // Generate puzzles of levels given in -0, -1, -2, -3, -4.
 		numberOfWorkers := runtime.NumCPU()
-		numberOfTasks := level0Count + level1Count + level2Count // + level3Count + level4Count
+		numberOfTasks := level0Count + level1Count + level2Count + level3Count // + level4Count
 
 		tasks := make(chan generator.Level, numberOfTasks)
 		results := make(chan *generator.Game, numberOfTasks)

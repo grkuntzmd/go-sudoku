@@ -39,8 +39,8 @@ const html = `
 </html>
 `
 
-func (g *Grid) HTML(colors *[rows][cols][10]color) {
-	s := g.SVG(colors)
+func (g *Grid) HTML(showCandidates bool, colors *[rows][cols][10]color) {
+	s := g.SVG(showCandidates, colors)
 
 	var b strings.Builder
 	t := template.Must(template.New("html").Parse(html))
@@ -53,7 +53,7 @@ func (g *Grid) HTML(colors *[rows][cols][10]color) {
 	}
 }
 
-func (g *Grid) SVG(colors *[rows][cols][10]color) string {
+func (g *Grid) SVG(showCandidates bool, colors *[rows][cols][10]color) string {
 	const (
 		scale      = 2
 		width      = 500 * scale
@@ -85,7 +85,7 @@ func (g *Grid) SVG(colors *[rows][cols][10]color) string {
 				}
 
 				canvas.Text(c*50+xoffset+25, r*50+yoffset+35, digits, "font:25px sans-serif;;text-anchor:middle"+color)
-			} else {
+			} else if showCandidates {
 				for d := 1; d <= 9; d++ {
 					if cell&(1<<d) != 0 {
 						cr := (d - 1) / 3
