@@ -26,8 +26,8 @@ type (
 
 const (
 	black color = iota
-	red
 	blue
+	red
 )
 
 func (g *Grid) unitPairs(pairMaps *[10]map[pair]bool) {

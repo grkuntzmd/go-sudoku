@@ -480,7 +480,7 @@ outer:
 				continue inner
 			}
 
-			// From https://stackoverflow.com/a/7280517/96233
+			// From https://stackoverflow.com/a/7280517/96233.
 
 			*grid = *solutions[0]                                                                     // Copy the first solution
 			points := grid.allPoints()                                                                // Get all points from the first solution.
@@ -491,9 +491,10 @@ outer:
 				points = points[1:]
 				*grid.pt(curr.point) = all // Clear the cell.
 
-				cp := *grid
+				// cp := *grid
 				solutions = solutions[:0]
-				cp.Search(&solutions)
+				// cp.Search(&solutions)
+				grid.Search(&solutions)
 
 				if len(solutions) > 1 { // No longer unique.
 					*grid.pt(curr.point) = curr.cell // Put the value back.
