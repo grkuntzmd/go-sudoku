@@ -339,7 +339,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 		if g.reduceLevel(&maxLevel, Standard, strategies, []func() bool{
 			g.xWing,
 			g.yWing,
-			g.singlesChain,
+			g.singlesChains,
 			g.swordfish,
 			g.xyzWing,
 		}) {

@@ -16,8 +16,8 @@
 
 package generator
 
-// singlesChain removes candidates by two methods. Prior to removing any candidates, chains are created between cells that contain the only two occurances of a digit in a unit (box, row, or column). The chains connect the units together through the doubly occurring digits. Starting at an arbitrary location in the chain, the cells are alternately colored with two different colors. "Twice in a unit": if the same color occurs twice in a single unit, all cells marked with that color anywhere in the puzzle can be removed. "Two colors elsewhere": if a non-chain cell containing the digit can "see" two cells colored with opposite colors, the digit can be removing from the non-chain cell.
-func (g *Grid) singlesChain() (res bool) {
+// singlesChains removes candidates by two methods. Prior to removing any candidates, chains are created between cells that contain the only two occurances of a digit in a unit (box, row, or column). The chains connect the units together through the doubly occurring digits. Starting at an arbitrary location in the chain, the cells are alternately colored with two different colors. "Twice in a unit": if the same color occurs twice in a single unit, all cells marked with that color anywhere in the puzzle can be removed. "Two colors elsewhere": if a non-chain cell containing the digit can "see" two cells colored with opposite colors, the digit can be removing from the non-chain cell.
+func (g *Grid) singlesChains() (res bool) {
 	// Create a pairs set containing cells where the cells contain the only two occurrances of a digit in the unit. We use a set so that the pairs are unique.
 	var pairMaps [10]map[pair]bool
 	g.unitPairs(&pairMaps)
@@ -33,9 +33,12 @@ func (g *Grid) singlesChain() (res bool) {
 			for {
 				changed := false
 				for p := range pairMap {
-					if setColors(p, &colors, &pairMap, setBoth) {
+					set, del := setColors(p, &colors, setBoth)
+					if set {
 						changed = true
 						setBoth = false
+					}
+					if del {
 						delete(pairMap, p)
 					}
 				}
@@ -128,7 +131,7 @@ func (g *Grid) twiceInAUnit(colors []point) bool {
 	return false
 }
 
-func setColors(p pair, colors *map[point]color, pairMap *map[pair]bool, colorBoth bool) bool {
+func setColors(p pair, colors *map[point]color, colorBoth bool) (bool, bool) {
 	colorLeft := (*colors)[p.left]
 	colorRight := (*colors)[p.right]
 
@@ -136,31 +139,30 @@ func setColors(p pair, colors *map[point]color, pairMap *map[pair]bool, colorBot
 		if colorBoth {
 			(*colors)[p.left] = red
 			(*colors)[p.right] = blue
-			return true
+			return true, true
 		}
-		return false
+		return false, false
 	}
 
 	if colorLeft == red && colorRight == black {
 		(*colors)[p.right] = blue
-		return true
+		return true, true
 	}
 
 	if colorLeft == blue && colorRight == black {
 		(*colors)[p.right] = red
-		return true
+		return true, true
 	}
 
 	if colorRight == red && colorLeft == black {
 		(*colors)[p.left] = blue
-		return true
+		return true, true
 	}
 
 	if colorRight == blue && colorLeft == black {
 		(*colors)[p.left] = red
-		return true
+		return true, true
 	}
 
-	delete(*pairMap, p)
-	return false
+	return false, true
 }
