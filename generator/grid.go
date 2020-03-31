@@ -29,6 +29,7 @@ import (
 )
 
 type (
+	// Grid is the primary data structure for the generator. It contains the candidates for each cell in the 9 x 9 puzzle.
 	Grid struct {
 		orig  [rows][cols]bool
 		cells [rows][cols]cell
@@ -123,10 +124,10 @@ func (g *Grid) allPoints() (res []pointCell) {
 // cellChange is a convenience function that is called by strategy methods when a cell changes value.
 func (g *Grid) cellChange(res *bool, format string, a ...interface{}) {
 	*res = true
-	if verbose >= 2 {
+	if verbose >= 1 {
 		fmt.Printf(format, a...)
 	}
-	if verbose >= 3 {
+	if verbose >= 2 {
 		g.Display()
 	}
 }
@@ -460,6 +461,26 @@ func (g *Grid) solvedGroup(gr *group) bool {
 	return true
 }
 
+// Valid returns true if the grid contains at most one occurance of each digit in each unit.
+func (g *Grid) Valid() bool {
+	return g.validGroup(&box) && g.validGroup(&col) && g.validGroup(&row)
+}
+
+func (g *Grid) validGroup(gr *group) bool {
+	for _, u := range gr.unit {
+		digits := g.digitPoints(u)
+
+		for d := 1; d <= 9; d++ {
+			if len(digits[d]) > 1 {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// Worker generates puzzles. It removes a requested puzzle level from the tasks channel and attempts to generate a puzzle at the level. If it succeeds, it pushes the puzzle to the results channel. If it cannot generate a puzzle, it pushes nil.
 func Worker(tasks chan Level, results chan *Game) {
 outer:
 	for level := range tasks {

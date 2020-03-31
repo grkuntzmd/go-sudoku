@@ -16,6 +16,7 @@
 
 package generator
 
+// Game represents a solved or unsolved puzzle and includes the maximum strategy level used, the number of original clues, a list of strategies used, the original puzzle, and the solution, if found.
 type Game struct {
 	Level
 	Clues            uint

@@ -16,13 +16,19 @@
 
 package generator
 
+// Level is a type wrapper for the difficulty levels of puzzles.
 type Level int
 
 const (
+	// Easy puzzle use only basic strategies for solving.
 	Easy Level = iota
+	// Standard puzzles use more complex strategies.
 	Standard
+	// Hard puzzles use very challenging strategies.
 	Hard
+	// Expert puzzles use ridiculously difficult stretegies.
 	Expert
+	// Extreme puzzles use nearly impossible strategies.
 	Extreme
 )
 

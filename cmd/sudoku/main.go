@@ -98,6 +98,12 @@ func main() {
 					continue
 				}
 				grid.Display()
+
+				if !grid.Valid() {
+					fmt.Fprintln(os.Stderr, "grid is invalid")
+					continue
+				}
+
 				strategies := make(map[string]bool)
 				start := time.Now()
 				maxLevel, solved := grid.Reduce(&strategies)

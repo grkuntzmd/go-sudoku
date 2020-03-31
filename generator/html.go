@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	svg "github.com/ajstarks/svgo"
+	s "github.com/ajstarks/svgo"
 	"github.com/pkg/browser"
 )
 
@@ -39,8 +39,9 @@ const html = `
 </html>
 `
 
+// HTML generates the HTML for a grid. The HTML will contain embedded SVG for the actual grid.
 func (g *Grid) HTML(showCandidates bool, colors *[rows][cols][10]color) {
-	s := g.SVG(showCandidates, colors)
+	s := g.svg(showCandidates, colors)
 
 	var b strings.Builder
 	t := template.Must(template.New("html").Parse(html))
@@ -53,7 +54,7 @@ func (g *Grid) HTML(showCandidates bool, colors *[rows][cols][10]color) {
 	}
 }
 
-func (g *Grid) SVG(showCandidates bool, colors *[rows][cols][10]color) string {
+func (g *Grid) svg(showCandidates bool, colors *[rows][cols][10]color) string {
 	const (
 		scale      = 2
 		width      = 500 * scale
@@ -65,7 +66,7 @@ func (g *Grid) SVG(showCandidates bool, colors *[rows][cols][10]color) string {
 	)
 	var b strings.Builder
 
-	canvas := svg.New(&b)
+	canvas := s.New(&b)
 	canvas.Start(int(width), int(height))
 	canvas.Scale(scale)
 	canvas.Rect(0, 0, 500, 500, "fill:white")
