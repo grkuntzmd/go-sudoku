@@ -52,6 +52,7 @@ const (
 var (
 	attempts  uint
 	colorized bool
+	encodings bool
 	verbose   uint
 )
 
@@ -60,6 +61,7 @@ func init() {
 
 	flag.UintVar(&attempts, "a", 100, "maximum `attempts` to generate a puzzle")
 	flag.BoolVar(&colorized, "c", false, "colorize the output for ANSI terminals")
+	flag.BoolVar(&encodings, "e", false, "Add base-36 encodings to the each grid display (used to write test cases)")
 	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 }
 
@@ -196,6 +198,10 @@ func (g *Grid) Display() {
 
 	// Bottom line.
 	fmt.Printf("\t  %s%s%s%s%s%s%s\n", botLeft, bars, botT, bars, botT, bars, botRight)
+
+	if encodings {
+		fmt.Printf("base-36: %s\n", g.encode())
+	}
 }
 
 // digitPlaces returns an array of digits containing values where the bits (1 - 9) are set if the corresponding digit appears in that cell.
@@ -235,6 +241,17 @@ func (g *Grid) emptyCell() bool {
 		}
 	}
 	return false
+}
+
+func (g *Grid) encode() string {
+	var b strings.Builder
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
+			fmt.Fprintf(&b, "%02s", strconv.FormatUint(uint64(g.cells[r][c])/2, 36))
+		}
+	}
+
+	return b.String()
 }
 
 // maxWidth calculates the width in characters of the widest cell in the grid (maximum number of candidate digits). If the width is 9, it is changed to 1 because we will display only a dot ('.').
@@ -468,12 +485,16 @@ func (g *Grid) Valid() bool {
 
 func (g *Grid) validGroup(gr *group) bool {
 	for _, u := range gr.unit {
-		digits := g.digitPoints(u)
-
-		for d := 1; d <= 9; d++ {
-			if len(digits[d]) > 1 {
+		var seen [10]bool
+		for _, p := range u {
+			if !g.orig[p.r][p.c] {
+				continue
+			}
+			digit := g.pt(p).lowestSetBit()
+			if seen[digit] {
 				return false
 			}
+			seen[digit] = true
 		}
 	}
 
@@ -547,6 +568,7 @@ outer:
 				sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 
 				results <- &Game{level, clues, s, grid, solution}
+				fmt.Printf("Generated a %s puzzle\n", level)
 				continue outer
 			}
 
@@ -575,4 +597,21 @@ func colorize(c string, s string) string {
 	}
 
 	return fmt.Sprintf("%s", s)
+}
+
+func decode(s string) *Grid {
+	if len(s) != 162 {
+		panic(fmt.Sprintf("encoding has bad length: %d (should be 162)", len(s)))
+	}
+
+	g := Grid{}
+	for i := 0; i < 162; i += 2 {
+		c, err := strconv.ParseUint(s[i:i+2], 36, 16)
+		if err != nil || c > 1023 {
+			panic(fmt.Sprintf("encoding has bad value: %s", s[i:i+2]))
+		}
+		g.cells[i/2/9][(i/2)%9] = cell(c * 2)
+	}
+
+	return &g
 }

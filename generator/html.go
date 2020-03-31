@@ -41,7 +41,7 @@ const html = `
 
 // HTML generates the HTML for a grid. The HTML will contain embedded SVG for the actual grid.
 func (g *Grid) HTML(showCandidates bool, colors *[rows][cols][10]color) {
-	s := g.svg(showCandidates, colors)
+	s := g.SVG(2.0, false, showCandidates, colors)
 
 	var b strings.Builder
 	t := template.Must(template.New("html").Parse(html))
@@ -54,21 +54,26 @@ func (g *Grid) HTML(showCandidates bool, colors *[rows][cols][10]color) {
 	}
 }
 
-func (g *Grid) svg(showCandidates bool, colors *[rows][cols][10]color) string {
+// SVG returns the standard vector graphics representation for a grid.
+func (g *Grid) SVG(scale float64, invert bool, showCandidates bool, colors *[rows][cols][10]color) string {
 	const (
-		scale      = 2
-		width      = 500 * scale
-		height     = 500 * scale
 		xoffset    = 25
 		yoffset    = 25
 		gridWidth  = 450
 		gridHeight = 450
 	)
-	var b strings.Builder
+	var (
+		width  = 500 * scale
+		height = 500 * scale
+		b      strings.Builder
+	)
 
 	canvas := s.New(&b)
 	canvas.Start(int(width), int(height))
 	canvas.Scale(scale)
+	if invert {
+		canvas.Gtransform("translate(500, 500) rotate(180)")
+	}
 	canvas.Rect(0, 0, 500, 500, "fill:white")
 	canvas.Grid(xoffset, yoffset, gridWidth, gridHeight, gridWidth/9, "stroke:black")
 	canvas.Grid(xoffset, yoffset, gridWidth, gridHeight, gridWidth/3, "stroke:black;stroke-width:5;stroke-linecap:round")
@@ -111,6 +116,10 @@ func (g *Grid) svg(showCandidates bool, colors *[rows][cols][10]color) string {
 			}
 		}
 	}
+	if invert {
+		canvas.Gend()
+	}
+	canvas.Gend()
 
 	canvas.End()
 

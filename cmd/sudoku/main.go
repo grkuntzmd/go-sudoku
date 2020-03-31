@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"html/template"
 	"os"
 	"path"
 	"runtime"
@@ -28,9 +29,24 @@ import (
 	"time"
 
 	"dogdaze.org/sudoku/generator"
+	"github.com/pkg/browser"
 )
 
-type inputs []string
+type (
+	inputs []string
+
+	puzzle struct {
+		Num int
+		generator.Level
+		Break bool
+		template.HTML
+	}
+
+	solution struct {
+		Num int
+		template.HTML
+	}
+)
 
 var (
 	buildInfo  string
@@ -172,22 +188,24 @@ func main() {
 
 		close(tasks)
 
+		games := make([]*generator.Game, 0, numberOfTasks)
+
 		for t := 0; t < numberOfTasks; t++ {
 			g := <-results
 			if g != nil {
-				fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
-				g.Puzzle.Display()
-				g.Solution.Display()
+				// fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
+				// g.Puzzle.Display()
+				// g.Solution.Display()
+				games = append(games, g)
 			}
 		}
-	}
-}
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", path.Base(os.Args[0]))
-	flag.PrintDefaults()
-	fmt.Fprintln(os.Stderr, "\nEither -i or level counts (-0, -1, -2, -3, -4) may be used, but not both.")
-	fmt.Fprintf(os.Stderr, "\nbuildStamp: %s, gitHash: %s, version: %s\n", buildStamp, gitHash, version)
+		sort.Slice(games, func(i, j int) bool {
+			return games[i].Level < games[j].Level
+		})
+
+		html(games)
+	}
 }
 
 func (i *inputs) Set(value string) error {
@@ -197,4 +215,72 @@ func (i *inputs) Set(value string) error {
 
 func (i *inputs) String() string {
 	return strings.Join(*i, ",")
+}
+
+func html(games []*generator.Game) {
+	puzzles := make([]puzzle, 0, len(games))
+	solutions := make([]solution, 0, len(games))
+
+	for i, g := range games {
+		puzzles = append(puzzles, puzzle{i + 1, g.Level, i%2 == 1, template.HTML(g.Puzzle.SVG(0.8, false, false, nil))})
+		solutions = append(solutions, solution{i + 1, template.HTML(g.Solution.SVG(0.3, true, false, nil))})
+	}
+
+	t := template.Must(template.New("html").Parse(`
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Sudoku</title>
+
+			<style>
+				.break { page-break-after: always; }
+				.solutions {
+					display: flex;
+					flex-direction: row;
+					flex-wrap: wrap;
+					justify-content: space-between;
+					align-items: flex-start;
+				}
+			</style>
+		</head>
+		<body>
+			{{ range .Puzzles }}
+				<div {{ if .Break }}class="break"{{ end }} style="page-break-inside: avoid;">
+					<h2>{{ .Num }} {{ .Level }}</h2>
+					<p>{{ .HTML }}</p>
+				</div>
+			{{ end }}
+			<p class="break"></p>
+			<div class="solutions">
+				{{ range .Solutions }}
+					<div style="page-break-inside: avoid;">
+						<h4>{{ .Num }}</h4>
+						<p>{{ .HTML }}</p>
+					</div>
+				{{ end }}
+			</div>
+		</body>
+		</html>
+	`))
+
+	var b strings.Builder
+	if err := t.Execute(&b, struct {
+		Puzzles   []puzzle
+		Solutions []solution
+	}{puzzles, solutions}); err != nil {
+		panic(err)
+	}
+
+	if err := browser.OpenReader(strings.NewReader(b.String())); err != nil {
+		panic(err)
+	}
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", path.Base(os.Args[0]))
+	flag.PrintDefaults()
+	fmt.Fprintln(os.Stderr, "\nEither -i or level counts (-0, -1, -2, -3, -4) may be used, but not both.")
+	fmt.Fprintf(os.Stderr, "\nbuildStamp: %s, gitHash: %s, version: %s\n", buildStamp, gitHash, version)
 }
