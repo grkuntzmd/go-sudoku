@@ -16,6 +16,7 @@
 
 package generator
 
+// xyChains removes candidates by following a chain of bivalued cells. If a candidate is shared by both ends of the chain, that candidate can be removed from any cells that can see both ends ofr the chain.
 func (g *Grid) xyChains(verbose uint) (res bool) {
 	var links [10]map[link]bool
 	g.findBivalueLinks(&box, &links)
