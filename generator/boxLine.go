@@ -16,13 +16,14 @@
 
 package generator
 
-func (g *Grid) boxLine() bool {
-	return g.boxLineGroup(&col, pointCol, pointRow, func(i, c int) int { return i*3 + c/3 }) ||
-		g.boxLineGroup(&row, pointRow, pointCol, func(i, r int) int { return r/3*3 + i })
+func (g *Grid) boxLine(verbose uint) bool {
+	return g.boxLineGroup(&col, verbose, pointCol, pointRow, func(i, c int) int { return i*3 + c/3 }) ||
+		g.boxLineGroup(&row, verbose, pointRow, pointCol, func(i, r int) int { return r/3*3 + i })
 }
 
 func (g *Grid) boxLineGroup(
 	gr *group,
+	verbose uint,
 	major func(point) uint8,
 	minor func(point) uint8,
 	boxSel func(int, int) int,
@@ -59,7 +60,7 @@ func (g *Grid) boxLineGroup(
 				}
 
 				if g.pt(p).andNot(1 << d) {
-					g.cellChange(&res, "boxLine: all %d's in %s %d appear in box %d removing from %s\n", d, gr.name, ui, boxSel(index, ui), p)
+					g.cellChange(&res, verbose, "boxLine: all %d's in %s %d appear in box %d removing from %s\n", d, gr.name, ui, boxSel(index, ui), p)
 				}
 			}
 		}

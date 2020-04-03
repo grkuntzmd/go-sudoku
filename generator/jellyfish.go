@@ -17,11 +17,11 @@
 package generator
 
 // jellyfish finds and removes candidates. A jellyfish is a 4 by 4 sixteen-cell pattern, where is in each column (or row), a candidate is only found in four different rows (or columns). The candidate can be removed from all other columns (or row) that line up with the four rows. jellyfish extends swordfish from 3 units to 4.
-func (g *Grid) jellyfish() bool {
-	return g.jellyfishGroup(&col) || g.jellyfishGroup(&row)
+func (g *Grid) jellyfish(verbose uint) bool {
+	return g.jellyfishGroup(&col, verbose) || g.jellyfishGroup(&row, verbose)
 }
 
-func (g *Grid) jellyfishGroup(gr *group) (res bool) {
+func (g *Grid) jellyfishGroup(gr *group, verbose uint) (res bool) {
 	for p1i, p1s := range gr.unit {
 		digits1 := g.digitPlaces(p1s)
 
@@ -63,7 +63,7 @@ func (g *Grid) jellyfishGroup(gr *group) (res bool) {
 
 							for _, p := range places {
 								if g.pt(ps[p]).andNot(1 << d) {
-									g.cellChange(&res, "jellyfish: (%d, %d, %d, %d), in %s %d, removing %d from position %d (%s)\n", p1i, p2i, p3i, p4i, gr.name, pi, d, p, ps[p])
+									g.cellChange(&res, verbose, "jellyfish: (%d, %d, %d, %d), in %s %d, removing %d from position %d (%s)\n", p1i, p2i, p3i, p4i, gr.name, pi, d, p, ps[p])
 								}
 							}
 						}

@@ -17,12 +17,12 @@
 package generator
 
 // hiddenPair removes other digits from a pair of cells in a group (box, column, row) when that pair contains the only occurrances of the digits in the group and returns true if it changes any cells.
-func (g *Grid) hiddenPair() bool {
-	return g.hiddenPairGroup(&box) || g.hiddenPairGroup(&col) || g.hiddenPairGroup(&row)
+func (g *Grid) hiddenPair(verbose uint) bool {
+	return g.hiddenPairGroup(&box, verbose) || g.hiddenPairGroup(&col, verbose) || g.hiddenPairGroup(&row, verbose)
 
 }
 
-func (g *Grid) hiddenPairGroup(gr *group) (res bool) {
+func (g *Grid) hiddenPairGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		points := g.digitPoints(u)
 
@@ -34,10 +34,9 @@ func (g *Grid) hiddenPairGroup(gr *group) (res bool) {
 
 				if comparePointSlices(points[d1], points[d2]) {
 					comb := cell(1<<d1 | 1<<d2)
-					for k := 0; k < 2; k++ {
-						p := points[d1][k]
+					for _, p := range points[d1] {
 						if g.pt(p).and(comb) {
-							g.cellChange(&res, "hiddenPair: in %s %d limits %s (pair: %s, %s) to %s\n", gr.name, ui, p, points[d1][0], points[d1][1], comb)
+							g.cellChange(&res, verbose, "hiddenPair: in %s %d limits %s (pair: %s, %s) to %s\n", gr.name, ui, p, points[d1][0], points[d1][1], comb)
 						}
 					}
 				}

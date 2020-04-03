@@ -17,11 +17,11 @@
 package generator
 
 // nakedTriple checks a group for 3 cells with the same triple of values. If present, those values can be removed from all other cells in the group. It returns true if it changes any cells.
-func (g *Grid) nakedTriple() bool {
-	return g.nakedTripleGroup(&box) || g.nakedTripleGroup(&col) || g.nakedTripleGroup(&row)
+func (g *Grid) nakedTriple(verbose uint) bool {
+	return g.nakedTripleGroup(&box, verbose) || g.nakedTripleGroup(&col, verbose) || g.nakedTripleGroup(&row, verbose)
 }
 
-func (g *Grid) nakedTripleGroup(gr *group) (res bool) {
+func (g *Grid) nakedTripleGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		for _, p1 := range u {
 			cell1 := *g.pt(p1)
@@ -67,7 +67,7 @@ func (g *Grid) nakedTripleGroup(gr *group) (res bool) {
 						}
 
 						if g.pt(p).andNot(comb) {
-							g.cellChange(&res, "nakedTriple: in %s %d (%s, %s, %s) removing %s from %s\n", gr.name, ui, p1, p2, p3, comb, p)
+							g.cellChange(&res, verbose, "nakedTriple: in %s %d (%s, %s, %s) removing %s from %s\n", gr.name, ui, p1, p2, p3, comb, p)
 						}
 					}
 				}

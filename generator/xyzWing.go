@@ -17,7 +17,7 @@
 package generator
 
 // xyzWing removes candidates in a manor similar to yWing. The pivot point contains XYZ. If it can see two other cells XZ and YZ, then any cells that can be seen by all three can be cleared of Z.
-func (g *Grid) xyzWing() (res bool) {
+func (g *Grid) xyzWing(verbose uint) (res bool) {
 	for _, u := range box.unit {
 		for _, p := range u { // Traverse all cells, using box units for convenience.
 			cell := *g.pt(p)
@@ -64,7 +64,7 @@ func (g *Grid) xyzWing() (res bool) {
 							if overlap[r][c] {
 								bits := cell1 & cell2 & cell
 								if (&g.cells[r][c]).andNot(bits) {
-									g.cellChange(&res, "xyzWing: %s, %s, %s causes clearing %s from (%d, %d)\n", p, p1, p2, bits, r, c)
+									g.cellChange(&res, verbose, "xyzWing: %s, %s, %s causes clearing %s from (%d, %d)\n", p, p1, p2, bits, r, c)
 								}
 							}
 						}

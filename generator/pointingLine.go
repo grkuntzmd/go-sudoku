@@ -17,12 +17,12 @@
 package generator
 
 // pointingLine removes candidates. When a candidate within a box appears only in a single column or row, that candidate can be removed from all cells in the column or row outside of the box. It returns true if it changes any cells.
-func (g *Grid) pointingLine() bool {
-	return g.pointingLineGroup("col", func(p point) *[9]point {
+func (g *Grid) pointingLine(verbose uint) bool {
+	return g.pointingLineGroup("col", verbose, func(p point) *[9]point {
 		return &col.unit[p.c]
 	}, func(p point) uint8 {
 		return p.c
-	}) || g.pointingLineGroup("row", func(p point) *[9]point {
+	}) || g.pointingLineGroup("row", verbose, func(p point) *[9]point {
 		return &row.unit[p.r]
 	}, func(p point) uint8 {
 		return p.r
@@ -31,6 +31,7 @@ func (g *Grid) pointingLine() bool {
 
 func (g *Grid) pointingLineGroup(
 	gr string,
+	verbose uint,
 	sel func(point) *[9]point,
 	axis func(point) uint8,
 ) (res bool) {
@@ -57,7 +58,7 @@ func (g *Grid) pointingLineGroup(
 				}
 
 				if g.pt(p).andNot(1 << d) {
-					g.cellChange(&res, "pointingLine: in box %d removing %d from %s along %s %d\n", ui, d, p, gr, a)
+					g.cellChange(&res, verbose, "pointingLine: in box %d removing %d from %s along %s %d\n", ui, d, p, gr, a)
 				}
 			}
 		}

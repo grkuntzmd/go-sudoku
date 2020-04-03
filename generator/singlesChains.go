@@ -17,7 +17,7 @@
 package generator
 
 // singlesChains removes candidates by two methods. Prior to removing any candidates, chains are created between cells that contain the only two occurances of a digit in a unit (box, row, or column). The chains connect the units together through the doubly occurring digits. Starting at an arbitrary location in the chain, the cells are alternately colored with two different colors. "Twice in a unit": if the same color occurs twice in a single unit, all cells marked with that color anywhere in the puzzle can be removed. "Two colors elsewhere": if a non-chain cell containing the digit can "see" two cells colored with opposite colors, the digit can be removing from the non-chain cell.
-func (g *Grid) singlesChains() (res bool) {
+func (g *Grid) singlesChains(verbose uint) (res bool) {
 	// Create a pairs set containing cells where the cells contain the only two occurrances of a digit in the unit. We use a set so that the pairs are unique.
 	var pairMaps [10]map[pair]bool
 	g.unitPairs(&pairMaps)
@@ -62,13 +62,13 @@ func (g *Grid) singlesChains() (res bool) {
 			if g.twiceInAUnit(blues) {
 				for _, p := range blues {
 					if g.pt(p).andNot(1 << d) {
-						g.cellChange(&res, "singlesChain: in %s, removing %d for twice in a unit\n", p, d)
+						g.cellChange(&res, verbose, "singlesChain: in %s, removing %d for twice in a unit\n", p, d)
 					}
 				}
 			} else if g.twiceInAUnit(reds) {
 				for _, p := range reds {
 					if g.pt(p).andNot(1 << d) {
-						g.cellChange(&res, "singlesChain: in %s, removing %d for twice in a unit\n", p, d)
+						g.cellChange(&res, verbose, "singlesChain: in %s, removing %d for twice in a unit\n", p, d)
 					}
 				}
 			}
@@ -89,14 +89,14 @@ func (g *Grid) singlesChains() (res bool) {
 					b := boxOf(r, c)
 					var seesBlue *point
 					for _, blue := range blues {
-						if b == boxOf(blue.r, blue.c) || c == blue.c || r == blue.r {
+						if b == boxOfPoint(blue) || c == blue.c || r == blue.r {
 							pt := blue
 							seesBlue = &pt
 						}
 					}
 					var seesRed *point
 					for _, red := range reds {
-						if b == boxOf(red.r, red.c) || c == red.c || r == red.r {
+						if b == boxOfPoint(red) || c == red.c || r == red.r {
 							pt := red
 							seesRed = &pt
 						}
@@ -104,7 +104,7 @@ func (g *Grid) singlesChains() (res bool) {
 
 					if seesBlue != nil && seesRed != nil {
 						if g.pt(p).andNot(1 << d) {
-							g.cellChange(&res, "singlesChain: in %s, removing %d for two colors elsewhere (%s, %s)\n", p, d, *seesBlue, *seesRed)
+							g.cellChange(&res, verbose, "singlesChain: in %s, removing %d for two colors elsewhere (%s, %s)\n", p, d, *seesBlue, *seesRed)
 						}
 					}
 				}
@@ -122,7 +122,7 @@ func (g *Grid) twiceInAUnit(colors []point) bool {
 				continue
 			}
 
-			if boxOf(p1.r, p1.c) == boxOf(p2.r, p2.c) || p1.c == p2.c || p1.r == p2.r {
+			if boxOfPoint(p1) == boxOfPoint(p2) || p1.c == p2.c || p1.r == p2.r {
 				return true
 			}
 		}

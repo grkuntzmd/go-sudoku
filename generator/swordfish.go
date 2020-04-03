@@ -17,11 +17,11 @@
 package generator
 
 // swordfish finds and removes candidates. A swordfish is a 3 by 3 nine-cell pattern, where is in each column (or row), a candidate is only found in three different rows (or columns). The candidate can be removed from all other columns (or row) that line up with the three rows.
-func (g *Grid) swordfish() bool {
-	return g.swordfishGroup(&col) || g.swordfishGroup(&row)
+func (g *Grid) swordfish(verbose uint) bool {
+	return g.swordfishGroup(&col, verbose) || g.swordfishGroup(&row, verbose)
 }
 
-func (g *Grid) swordfishGroup(gr *group) (res bool) {
+func (g *Grid) swordfishGroup(gr *group, verbose uint) (res bool) {
 	for p1i, p1s := range gr.unit {
 		digits1 := g.digitPlaces(p1s)
 
@@ -55,7 +55,7 @@ func (g *Grid) swordfishGroup(gr *group) (res bool) {
 
 						for _, p := range places {
 							if g.pt(ps[p]).andNot(1 << d) {
-								g.cellChange(&res, "swordfish: (%d, %d, %d), in %s %d, removing %d from position %d (%s)\n", p1i, p2i, p3i, gr.name, pi, d, p, ps[p])
+								g.cellChange(&res, verbose, "swordfish: (%d, %d, %d), in %s %d, removing %d from position %d (%s)\n", p1i, p2i, p3i, gr.name, pi, d, p, ps[p])
 							}
 						}
 					}

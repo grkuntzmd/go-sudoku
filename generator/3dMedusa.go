@@ -16,7 +16,7 @@
 
 package generator
 
-func (g *Grid) medusa() (res bool) {
+func (g *Grid) medusa(verbose uint) (res bool) {
 	var pairMaps [10]map[pair]bool
 	g.unitPairs(&pairMaps)
 
@@ -68,9 +68,9 @@ func (g *Grid) medusa() (res bool) {
 			}
 		}
 		if blueMoreThanOnce {
-			g.removeColor(blue, &colors, "twice in a cell", &res)
+			g.removeColor(verbose, blue, &colors, "twice in a cell", &res)
 		} else if redMoreThanOnce {
-			g.removeColor(red, &colors, "twice in a cell", &res)
+			g.removeColor(verbose, red, &colors, "twice in a cell", &res)
 		}
 
 		if res {
@@ -94,9 +94,9 @@ func (g *Grid) medusa() (res bool) {
 		redMoreThanOnce = redMoreThanOnce || r
 
 		if blueMoreThanOnce {
-			g.removeColor(blue, &colors, "twice in a unit", &res)
+			g.removeColor(verbose, blue, &colors, "twice in a unit", &res)
 		} else if redMoreThanOnce {
-			g.removeColor(red, &colors, "twice in a unit", &res)
+			g.removeColor(verbose, red, &colors, "twice in a unit", &res)
 		}
 
 		if res {
@@ -124,7 +124,7 @@ func (g *Grid) medusa() (res bool) {
 						}
 
 						if g.pt(point{r, c}).andNot(1 << d) {
-							g.cellChange(&res, "3dMedusa (two colors in a cell): in %s, remove %d\n", point{r, c}, d)
+							g.cellChange(&res, verbose, "3dMedusa (two colors in a cell): in %s, remove %d\n", point{r, c}, d)
 						}
 					}
 				}
@@ -158,7 +158,7 @@ func (g *Grid) medusa() (res bool) {
 					if !immune[r][c][d] {
 						if blueInfluence[r][c][d] && redInfluence[r][c][d] {
 							if g.pt(point{r, c}).andNot(1 << d) {
-								g.cellChange(&res, "3dMedusa (two colors elsewhere): in %s, remove %d\n", point{r, c}, d)
+								g.cellChange(&res, verbose, "3dMedusa (two colors elsewhere): in %s, remove %d\n", point{r, c}, d)
 							}
 						}
 					}
@@ -189,11 +189,11 @@ func (g *Grid) medusa() (res bool) {
 				for d := 1; d <= 9; d++ {
 					if !immune[d] && blueFound != 0 && canSeeColor(d, point{r, c}, red, &colors) {
 						if g.pt(point{r, c}).andNot(1 << d) {
-							g.cellChange(&res, "3dMedusa (two colors unit and cell): in %s, remove %d\n", point{r, c}, d)
+							g.cellChange(&res, verbose, "3dMedusa (two colors unit and cell): in %s, remove %d\n", point{r, c}, d)
 						}
 					} else if !immune[d] && redFound != 0 && canSeeColor(d, point{r, c}, blue, &colors) {
 						if g.pt(point{r, c}).andNot(1 << d) {
-							g.cellChange(&res, "3dMedusa (two colors unit and cell): in %s, remove %d\n", point{r, c}, d)
+							g.cellChange(&res, verbose, "3dMedusa (two colors unit and cell): in %s, remove %d\n", point{r, c}, d)
 						}
 					}
 
@@ -230,11 +230,11 @@ func (g *Grid) medusa() (res bool) {
 					}
 				}
 				if seeBlue {
-					g.removeColor(blue, &colors, "cell emptied by color", &res)
+					g.removeColor(verbose, blue, &colors, "cell emptied by color", &res)
 					break outer
 				}
 				if seeRed {
-					g.removeColor(red, &colors, "cell emptied by color", &res)
+					g.removeColor(verbose, red, &colors, "cell emptied by color", &res)
 					break outer
 				}
 			}
@@ -312,13 +312,13 @@ func (g *Grid) groupColors(gr *group, colors *[rows][cols][10]color) (bool, bool
 	return blueMoreThanOnce, redMoreThanOnce
 }
 
-func (g *Grid) removeColor(cl color, colors *[rows][cols][10]color, message string, res *bool) {
+func (g *Grid) removeColor(verbose uint, cl color, colors *[rows][cols][10]color, message string, res *bool) {
 	for r := zero; r < rows; r++ {
 		for c := zero; c < cols; c++ {
 			for ci, color := range colors[r][c] {
 				if color == cl {
 					if g.pt(point{r, c}).andNot(1 << ci) {
-						g.cellChange(res, "3dMedusa (%s): in %s, remove %d\n", message, point{r, c}, ci)
+						g.cellChange(res, verbose, "3dMedusa (%s): in %s, remove %d\n", message, point{r, c}, ci)
 					}
 				}
 			}
@@ -327,7 +327,7 @@ func (g *Grid) removeColor(cl color, colors *[rows][cols][10]color, message stri
 }
 
 func canSeeColor(d int, curr point, c color, colors *[rows][cols][10]color) bool {
-	for _, u := range []*[9]point{&box.unit[boxOf(curr.r, curr.c)], &col.unit[curr.c], &row.unit[curr.r]} {
+	for _, u := range []*[9]point{&box.unit[boxOfPoint(curr)], &col.unit[curr.c], &row.unit[curr.r]} {
 		for _, p := range u {
 			if p == curr {
 				continue

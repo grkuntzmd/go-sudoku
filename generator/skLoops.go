@@ -16,7 +16,7 @@
 
 package generator
 
-func (g *Grid) skLoops() (res bool) {
+func (g *Grid) skLoops(verbose uint) (res bool) {
 	solved := make(map[point]bool)
 	for r := zero; r < rows; r++ {
 		for c := zero; c < cols; c++ {
@@ -80,21 +80,21 @@ func (g *Grid) skLoops() (res bool) {
 			continue
 		}
 
-		g.removeSfromSKLoops(&row, p0.r, topC, &immune, &res)
-		g.removeSfromSKLoops(&col, p1.c, rightC, &immune, &res)
-		g.removeSfromSKLoops(&row, p2.r, bottomC, &immune, &res)
-		g.removeSfromSKLoops(&col, p3.c, leftC, &immune, &res)
+		g.removeSfromSKLoops(&row, verbose, p0.r, topC, &immune, &res)
+		g.removeSfromSKLoops(&col, verbose, p1.c, rightC, &immune, &res)
+		g.removeSfromSKLoops(&row, verbose, p2.r, bottomC, &immune, &res)
+		g.removeSfromSKLoops(&col, verbose, p3.c, leftC, &immune, &res)
 
-		g.removeSfromSKLoops(&box, boxOf(p0.r, p0.c), leftS&topF, &immune, &res)
-		g.removeSfromSKLoops(&box, boxOf(p1.r, p1.c), topS&rightF, &immune, &res)
-		g.removeSfromSKLoops(&box, boxOf(p2.r, p2.c), rightS&bottomF, &immune, &res)
-		g.removeSfromSKLoops(&box, boxOf(p3.r, p3.c), bottomS&leftF, &immune, &res)
+		g.removeSfromSKLoops(&box, verbose, boxOfPoint(p0), leftS&topF, &immune, &res)
+		g.removeSfromSKLoops(&box, verbose, boxOfPoint(p1), topS&rightF, &immune, &res)
+		g.removeSfromSKLoops(&box, verbose, boxOfPoint(p2), rightS&bottomF, &immune, &res)
+		g.removeSfromSKLoops(&box, verbose, boxOfPoint(p3), bottomS&leftF, &immune, &res)
 	}
 
 	return
 }
 
-func (g *Grid) removeSfromSKLoops(gr *group, sel uint8, mask cell, immune *[rows][cols]bool, res *bool) {
+func (g *Grid) removeSfromSKLoops(gr *group, verbose uint, sel uint8, mask cell, immune *[rows][cols]bool, res *bool) {
 	for _, p := range gr.unit[sel] {
 		if immune[p.r][p.c] {
 			continue
@@ -102,7 +102,7 @@ func (g *Grid) removeSfromSKLoops(gr *group, sel uint8, mask cell, immune *[rows
 
 		prev := *g.pt(p)
 		if g.pt(p).andNot(mask) {
-			g.cellChange(res, "skloops: remove %s from %s\n", prev&mask, p)
+			g.cellChange(res, verbose, "skloops: remove %s from %s\n", prev&mask, p)
 		}
 	}
 }

@@ -17,12 +17,12 @@
 package generator
 
 // nakedQuad checks a group for 4 cells with the same quad of values. If present, those values can be removed from all other cells in the group. It returns true if it changes any cells.
-func (g *Grid) nakedQuad() bool {
-	return g.nakedQuadGroup(&box) || g.nakedQuadGroup(&col) || g.nakedQuadGroup(&row)
+func (g *Grid) nakedQuad(verbose uint) bool {
+	return g.nakedQuadGroup(&box, verbose) || g.nakedQuadGroup(&col, verbose) || g.nakedQuadGroup(&row, verbose)
 
 }
 
-func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
+func (g *Grid) nakedQuadGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		for _, p1 := range u {
 			cell1 := *g.pt(p1)
@@ -83,7 +83,7 @@ func (g *Grid) nakedQuadGroup(gr *group) (res bool) {
 							}
 
 							if g.pt(p).andNot(comb) {
-								g.cellChange(&res, "nakedQuad: in %s %d (%s, %s, %s, %s) removing %s from %s\n", gr.name, ui, p1, p2, p3, p4, comb, p)
+								g.cellChange(&res, verbose, "nakedQuad: in %s %d (%s, %s, %s, %s) removing %s from %s\n", gr.name, ui, p1, p2, p3, p4, comb, p)
 							}
 						}
 					}

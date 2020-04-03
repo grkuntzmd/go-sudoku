@@ -17,11 +17,11 @@
 package generator
 
 // nakedSingle removes a solved digit from all other candidates in the same unit (box, row, or column) and returns true if it modifies the grid.
-func (g *Grid) nakedSingle() bool {
-	return g.nakedSingleGroup(&box) || g.nakedSingleGroup(&col) || g.nakedSingleGroup(&row)
+func (g *Grid) nakedSingle(verbose uint) bool {
+	return g.nakedSingleGroup(&box, verbose) || g.nakedSingleGroup(&col, verbose) || g.nakedSingleGroup(&row, verbose)
 }
 
-func (g *Grid) nakedSingleGroup(gr *group) (res bool) {
+func (g *Grid) nakedSingleGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		for _, p1 := range u {
 			cell := *g.pt(p1)
@@ -35,7 +35,7 @@ func (g *Grid) nakedSingleGroup(gr *group) (res bool) {
 				}
 
 				if g.pt(p2).andNot(cell) {
-					g.cellChange(&res, "nakedSingle: in %s %d cell %s allows only %s, removed from %s\n", gr.name, ui, p1, cell, p2)
+					g.cellChange(&res, verbose, "nakedSingle: in %s %d cell %s allows only %s, removed from %s\n", gr.name, ui, p1, cell, p2)
 				}
 			}
 		}

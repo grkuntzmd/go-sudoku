@@ -17,11 +17,11 @@
 package generator
 
 // hiddenSingle solves a cell if it contains the only instance of a digit within its group (box, column, row) and returns true if it changes any cells.
-func (g *Grid) hiddenSingle() bool {
-	return g.hiddenSingleGroup(&box) || g.hiddenSingleGroup(&col) || g.hiddenSingleGroup(&row)
+func (g *Grid) hiddenSingle(verbose uint) bool {
+	return g.hiddenSingleGroup(&box, verbose) || g.hiddenSingleGroup(&col, verbose) || g.hiddenSingleGroup(&row, verbose)
 }
 
-func (g *Grid) hiddenSingleGroup(gr *group) (res bool) {
+func (g *Grid) hiddenSingleGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		points := g.digitPoints(u)
 
@@ -29,7 +29,7 @@ func (g *Grid) hiddenSingleGroup(gr *group) (res bool) {
 			if len(points[d]) == 1 {
 				p := points[d][0]
 				if g.pt(p).setTo(1 << d) {
-					g.cellChange(&res, "hiddenSingle: in %s %d set %s to %d\n", gr.name, ui, p, d)
+					g.cellChange(&res, verbose, "hiddenSingle: in %s %d set %s to %d\n", gr.name, ui, p, d)
 				}
 			}
 		}

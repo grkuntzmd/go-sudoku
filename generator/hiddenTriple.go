@@ -17,11 +17,11 @@
 package generator
 
 // hiddenTriple removes other digits from a triple of cells in a group (box, column, row) when that triple contains the only occurrances of the digits in the group. It returns true if it changes any cells.
-func (g *Grid) hiddenTriple() bool {
-	return g.hiddenTripleGroup(&box) || g.hiddenTripleGroup(&col) || g.hiddenTripleGroup(&row)
+func (g *Grid) hiddenTriple(verbose uint) bool {
+	return g.hiddenTripleGroup(&box, verbose) || g.hiddenTripleGroup(&col, verbose) || g.hiddenTripleGroup(&row, verbose)
 }
 
-func (g *Grid) hiddenTripleGroup(gr *group) (res bool) {
+func (g *Grid) hiddenTripleGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		places := g.digitPlaces(u)
 
@@ -67,7 +67,7 @@ func (g *Grid) hiddenTripleGroup(gr *group) (res bool) {
 					bits := cell(1<<d1 | 1<<d2 | 1<<d3)
 					for _, p := range points {
 						if g.pt(p).and(bits) {
-							g.cellChange(&res, "hiddenTriple: in %s %d limits %s (triple: %s, %s, %s) to %s\n", gr.name, ui, p, points[0], points[1], points[2], bits)
+							g.cellChange(&res, verbose, "hiddenTriple: in %s %d limits %s (triple: %s, %s, %s) to %s\n", gr.name, ui, p, points[0], points[1], points[2], bits)
 						}
 					}
 				}

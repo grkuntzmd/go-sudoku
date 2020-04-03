@@ -17,11 +17,11 @@
 package generator
 
 // hiddenQuad removes other digits from a quad of cells in a group (box, column, row) when that quad contains the only occurrances of the digits in the group. It returns true if it changes any cells.
-func (g *Grid) hiddenQuad() bool {
-	return g.hiddenQuadGroup(&box) || g.hiddenQuadGroup(&col) || g.hiddenQuadGroup(&row)
+func (g *Grid) hiddenQuad(verbose uint) bool {
+	return g.hiddenQuadGroup(&box, verbose) || g.hiddenQuadGroup(&col, verbose) || g.hiddenQuadGroup(&row, verbose)
 }
 
-func (g *Grid) hiddenQuadGroup(gr *group) (res bool) {
+func (g *Grid) hiddenQuadGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 		places := g.digitPlaces(u)
 
@@ -78,7 +78,7 @@ func (g *Grid) hiddenQuadGroup(gr *group) (res bool) {
 						bits := cell(1<<d1 | 1<<d2 | 1<<d3 | 1<<d4)
 						for _, p := range points {
 							if g.pt(p).and(bits) {
-								g.cellChange(&res, "hiddenQuad: in %s %d limits %s (quad: %s, %s, %s, %s) to %s\n", gr.name, ui, p, points[0], points[1], points[2], points[3], bits)
+								g.cellChange(&res, verbose, "hiddenQuad: in %s %d limits %s (quad: %s, %s, %s, %s) to %s\n", gr.name, ui, p, points[0], points[1], points[2], points[3], bits)
 							}
 						}
 					}

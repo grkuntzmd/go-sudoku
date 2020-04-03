@@ -17,11 +17,11 @@
 package generator
 
 // xWing removes candidates. If in 2 columns, say 0 and 7, all instances of a particular digit, say 4, appear in the same two rows, say 4 and 6, then 1 of the 4's must be in (0, 4) or (0, 6) and the other in (7, 4) or (7, 6). Therefore all of the other 4's in those two rows can be removed. The same logic applies if rows and columns are swapped. It returns true if it changes any cells.
-func (g *Grid) xWing() bool {
-	return g.xWingGroup(&col, &row) || g.xWingGroup(&row, &col)
+func (g *Grid) xWing(verbose uint) bool {
+	return g.xWingGroup(&col, &row, verbose) || g.xWingGroup(&row, &col, verbose)
 }
 
-func (g *Grid) xWingGroup(majorGroup, minorGroup *group) (res bool) {
+func (g *Grid) xWingGroup(majorGroup, minorGroup *group, verbose uint) (res bool) {
 	var digits [9][10]cell
 	for ui, u := range majorGroup.unit {
 		for pi, p := range u {
@@ -51,7 +51,7 @@ func (g *Grid) xWingGroup(majorGroup, minorGroup *group) (res bool) {
 								}
 
 								if g.pt(m).andNot(1 << d) {
-									g.cellChange(&res, "xWing: in %ss %d and %d, %d appears only in %s %d and 1 other; "+
+									g.cellChange(&res, verbose, "xWing: in %ss %d and %d, %d appears only in %s %d and 1 other; "+
 										"removing from %s\n", majorGroup.name, c1i, c2i, d, minorGroup.name, minor, m)
 								}
 							}

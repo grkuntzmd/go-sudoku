@@ -26,7 +26,6 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-	"time"
 
 	"dogdaze.org/sudoku/generator"
 	"github.com/pkg/browser"
@@ -60,7 +59,8 @@ var (
 	level3Count int
 	// level4Count int
 
-	input inputs
+	input   inputs
+	verbose uint
 )
 
 func init() {
@@ -71,6 +71,7 @@ func init() {
 	// flag.IntVar(&level4Count, "4", 0, "`count` of extreme (nearly impossible) games to generate")
 
 	flag.Var(&input, "i", "`file` containing input patterns (may be repeated)")
+	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 
 	if buildInfo != "" {
 		parts := strings.Split(buildInfo, "|")
@@ -121,8 +122,7 @@ func main() {
 				}
 
 				strategies := make(map[string]bool)
-				start := time.Now()
-				maxLevel, solved := grid.Reduce(&strategies)
+				maxLevel, solved := grid.Reduce(&strategies, verbose)
 
 				var names []string
 				for n := range strategies {
@@ -133,20 +133,20 @@ func main() {
 				grid.Display()
 				if solved {
 					sol++
-					fmt.Printf("level: %s, solved, (%s) in %d milliseconds\n", maxLevel, strings.Join(names, ", "), time.Since(start).Milliseconds())
+					fmt.Printf("level: %s, solved, (%s)\n", maxLevel, strings.Join(names, ", "))
 				} else {
-					fmt.Printf("level: %s, not solved (%s) in %d milliseconds\n", maxLevel, strings.Join(names, ", "), time.Since(start).Milliseconds())
+					fmt.Printf("level: %s, not solved (%s)\n", maxLevel, strings.Join(names, ", "))
 					solutions := make([]*generator.Grid, 0)
 					grid.Search(&solutions)
 					switch len(solutions) {
 					case 0:
-						fmt.Printf("still not solved after search, (%s) in %d milliseconds\n", strings.Join(names, ", "), time.Since(start).Milliseconds())
+						fmt.Printf("still not solved after search, (%s)\n", strings.Join(names, ", "))
 					case 1:
 						sol++
-						fmt.Printf("single solution found, (%s) in %d milliseconds\n", strings.Join(names, ", "), time.Since(start).Milliseconds())
+						fmt.Printf("single solution found, (%s)\n", strings.Join(names, ", "))
 						solutions[0].Display()
 					default:
-						fmt.Printf("multiple solutions found, (%s) in %d milliseconds\n", strings.Join(names, ", "), time.Since(start).Milliseconds())
+						fmt.Printf("multiple solutions found, (%s)\n", strings.Join(names, ", "))
 						for _, s := range solutions {
 							s.Display()
 						}
@@ -183,28 +183,28 @@ func main() {
 		}
 
 		// for t := 0; t < level4Count; t++ {
-		// 	tasks <- generator.Insane
+		// 	tasks <- generator.Extreme
 		// }
 
 		close(tasks)
 
-		games := make([]*generator.Game, 0, numberOfTasks)
+		// games := make([]*generator.Game, 0, numberOfTasks)
 
 		for t := 0; t < numberOfTasks; t++ {
 			g := <-results
 			if g != nil {
-				// fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
+				fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
 				// g.Puzzle.Display()
 				// g.Solution.Display()
-				games = append(games, g)
+				// games = append(games, g)
 			}
 		}
 
-		sort.Slice(games, func(i, j int) bool {
-			return games[i].Level < games[j].Level
-		})
+		// sort.Slice(games, func(i, j int) bool {
+		// 	return games[i].Level < games[j].Level
+		// })
 
-		html(games)
+		// html(games)
 	}
 }
 

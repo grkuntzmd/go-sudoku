@@ -20,15 +20,7 @@ import (
 	"fmt"
 )
 
-type (
-	link struct {
-		pair
-		unit   string
-		strong bool
-	}
-
-	loopKind = int
-)
+type loopKind = int
 
 const (
 	niceLoop loopKind = iota
@@ -36,14 +28,15 @@ const (
 	weakLoop
 )
 
-func (g *Grid) xCycles() (res bool) {
+func (g *Grid) xCycles(verbose uint) (res bool) {
 	// Find all strong links. A pair of points form a strong link if they contain the only two instances of a digit within a unit (box, column, or row).
-	var strongLinks [10]map[link]bool
-	g.findXCycleStrongLinks(&box, &strongLinks)
-	g.findXCycleStrongLinks(&col, &strongLinks)
-	g.findXCycleStrongLinks(&row, &strongLinks)
+	var strongLinks [10]map[unitLink]bool
+	g.findStrongLinks(&box, &strongLinks)
+	g.findStrongLinks(&col, &strongLinks)
+	g.findStrongLinks(&row, &strongLinks)
 
-	var weakLinks [10]map[link]bool
+	// Find all weak links. A pair of points form a weak link if they contain the two instances of a digit within a unit (box, column, or row). There can be other instances of the digit in the same unit.
+	var weakLinks [10]map[unitLink]bool
 	g.findXCycleWeakLinks(&box, &weakLinks)
 	g.findXCycleWeakLinks(&col, &weakLinks)
 	g.findXCycleWeakLinks(&row, &weakLinks)
@@ -72,7 +65,7 @@ func (g *Grid) xCycles() (res bool) {
 				for c := zero; c < cols; c++ {
 					if overlap[r][c] {
 						if g.pt(point{r, c}).andNot(1 << d) {
-							g.cellChange(&res, "xCycles: nice chain removes %d from %s\n", d, point{r, c})
+							g.cellChange(&res, verbose, "xCycles: nice chain removes %d from %s\n", d, point{r, c})
 						}
 					}
 				}
@@ -94,13 +87,13 @@ func (g *Grid) xCycles() (res bool) {
 			last := strongChain[length-1]
 			if first.strong && last.strong { // If the first and last links are strong, the discontinuity is the last point in the chain (last.right).
 				if g.pt(last.right).setTo(1 << d) {
-					g.cellChange(&res, "xCycles: strong chain sets %s to %d\n", last.right, d)
+					g.cellChange(&res, verbose, "xCycles: strong chain sets %s to %d\n", last.right, d)
 				}
 			} else { // Search the chain for the discontinuity.
 				for i := 0; i < length-1; i++ {
 					if strongChain[i].strong && strongChain[i+1].strong {
 						if g.pt(strongChain[i].right).setTo(1 << d) {
-							g.cellChange(&res, "xCycles: strong chain sets %s to %d\n", strongChain[i].right, d)
+							g.cellChange(&res, verbose, "xCycles: strong chain sets %s to %d\n", strongChain[i].right, d)
 						}
 						break // Once we find the discontinuity, we can stop looking because there can be only one ("Highlander").
 					}
@@ -123,13 +116,13 @@ func (g *Grid) xCycles() (res bool) {
 			last := weakChain[length-1]
 			if !first.strong && !last.strong { // If the first and last links are weak, the discontinuity is the last point in the chain (last.right).
 				if g.pt(last.right).andNot(1 << d) {
-					g.cellChange(&res, "xCycles: weak chain removes %d from %s\n", d, last.right)
+					g.cellChange(&res, verbose, "xCycles: weak chain removes %d from %s\n", d, last.right)
 				}
 			} else { // Search the chain for the discontinuity.
 				for i := 0; i < length-1; i++ {
 					if !weakChain[i].strong && !weakChain[i+1].strong {
 						if g.pt(weakChain[i].right).andNot(1 << d) {
-							g.cellChange(&res, "xCycles: weak chain removes %d from %s\n", d, weakChain[i].right)
+							g.cellChange(&res, verbose, "xCycles: weak chain removes %d from %s\n", d, weakChain[i].right)
 						}
 						break // Once we find the discontinuity, we can stop looking because there can be only one ("Highlander").
 					}
@@ -138,12 +131,12 @@ func (g *Grid) xCycles() (res bool) {
 		}
 	}
 
-	return false
+	return
 }
 
 func (g *Grid) checkUnit(d int, p1, p2 point) bool {
-	b1 := boxOf(p1.r, p1.c)
-	b2 := boxOf(p2.r, p2.c)
+	b1 := boxOfPoint(p1)
+	b2 := boxOfPoint(p2)
 	if b1 == b2 {
 		count := 0
 		for _, p := range box.unit[b1] {
@@ -183,28 +176,7 @@ func (g *Grid) checkUnit(d int, p1, p2 point) bool {
 	return false
 }
 
-func (g *Grid) findXCycleStrongLinks(gr *group, strongLinks *[10]map[link]bool) {
-	for pi, ps := range gr.unit {
-		points := g.digitPoints(ps)
-
-		for d := 1; d <= 9; d++ {
-			p := points[d]
-
-			if len(p) != 2 {
-				continue
-			}
-
-			s := &(*strongLinks)[d]
-			if *s == nil {
-				*s = make(map[link]bool)
-			}
-
-			(*s)[sortLink(link{pair{p[0], p[1]}, fmt.Sprintf("%s %d", gr.name, pi), true})] = true
-		}
-	}
-}
-
-func (g *Grid) findXCycleWeakLinks(gr *group, weakLinks *[10]map[link]bool) {
+func (g *Grid) findXCycleWeakLinks(gr *group, weakLinks *[10]map[unitLink]bool) {
 	for pi, ps := range gr.unit {
 		points := g.digitPoints(ps)
 
@@ -217,7 +189,7 @@ func (g *Grid) findXCycleWeakLinks(gr *group, weakLinks *[10]map[link]bool) {
 
 			w := &(*weakLinks)[d]
 			if *w == nil {
-				*w = make(map[link]bool)
+				*w = make(map[unitLink]bool)
 			}
 
 			for _, p1 := range p {
@@ -226,14 +198,14 @@ func (g *Grid) findXCycleWeakLinks(gr *group, weakLinks *[10]map[link]bool) {
 						continue
 					}
 
-					(*w)[sortLink(link{pair{p1, p2}, fmt.Sprintf("%s %d", gr.name, pi), false})] = true
+					(*w)[sortLink(unitLink{pair{p1, p2}, d, fmt.Sprintf("%s %d", gr.name, pi), false})] = true
 				}
 			}
 		}
 	}
 }
 
-func chainLoops(chain []link) bool {
+func chainLoops(chain []unitLink) bool {
 	if len(chain) == 0 {
 		return false
 	}
@@ -241,7 +213,7 @@ func chainLoops(chain []link) bool {
 	return chain[0].left == chain[len(chain)-1].right
 }
 
-func chainValid(checkComplete bool, kind loopKind, chain []link) bool {
+func chainValid(checkComplete bool, kind loopKind, chain []unitLink) bool {
 	doubleStrong := false
 	doubleWeak := false
 
@@ -302,11 +274,11 @@ func chainValid(checkComplete bool, kind loopKind, chain []link) bool {
 	return false
 }
 
-func findCycle(digit int, kind loopKind, strongLinks, weakLinks map[link]bool) (res []link) {
+func findCycle(digit int, kind loopKind, strongLinks, weakLinks map[unitLink]bool) (res []unitLink) {
 	// Try each strong link as the start of the chain and keep the longest chain we can form.
 	for s := range strongLinks {
-		chain := []link{s}
-		best := []link{}
+		chain := []unitLink{s}
+		best := []unitLink{}
 		findCycleRecursive(digit, kind, chain, &best, strongLinks, weakLinks)
 
 		if len(best) > len(res) {
@@ -320,7 +292,7 @@ func findCycle(digit int, kind loopKind, strongLinks, weakLinks map[link]bool) (
 	return
 }
 
-func findCycleRecursive(digit int, kind loopKind, chain []link, best *[]link, strongLinks, weakLinks map[link]bool) {
+func findCycleRecursive(digit int, kind loopKind, chain []unitLink, best *[]unitLink, strongLinks, weakLinks map[unitLink]bool) {
 	// If the right side of the last item in the chain links back to the head, we are done. TODO: keep searching for a longer chain.
 	if chainValid(true, kind, chain) && chainLoops(chain) {
 		if len(chain) > len(*best) {
@@ -332,7 +304,7 @@ func findCycleRecursive(digit int, kind loopKind, chain []link, best *[]link, st
 	}
 
 	last := chain[len(chain)-1]
-	var candidates []link
+	var candidates []unitLink
 
 	strongAllowed := false
 	weakAllowed := false
@@ -352,7 +324,7 @@ func findCycleRecursive(digit int, kind loopKind, chain []link, best *[]link, st
 	if strongAllowed {
 	strongOuter:
 		for s := range strongLinks {
-			reversed := link{pair{s.right, s.left}, s.unit, s.strong}
+			reversed := unitLink{pair{s.right, s.left}, s.digit, s.unit, s.strong}
 
 			for _, c := range chain {
 				if s.pair == c.pair || reversed.pair == c.pair { // Already in the chain, skip.
@@ -376,7 +348,7 @@ func findCycleRecursive(digit int, kind loopKind, chain []link, best *[]link, st
 	if weakAllowed {
 	weakOuter:
 		for w := range weakLinks {
-			reversed := link{pair{w.right, w.left}, w.unit, w.strong}
+			reversed := unitLink{pair{w.right, w.left}, w.digit, w.unit, w.strong}
 
 			for _, c := range chain {
 				if w.pair == c.pair || reversed.pair == c.pair { // Already in the chain, skip.
@@ -407,13 +379,4 @@ func findCycleRecursive(digit int, kind loopKind, chain []link, best *[]link, st
 	}
 
 	return
-}
-
-func sortLink(p link) link {
-	if p.left.r < p.right.r || p.left.r == p.right.r && p.left.c < p.right.c {
-		return p
-	}
-
-	p.left, p.right = p.right, p.left
-	return p
 }

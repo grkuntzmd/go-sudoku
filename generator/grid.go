@@ -53,7 +53,6 @@ var (
 	attempts  uint
 	colorized bool
 	encodings bool
-	verbose   uint
 )
 
 func init() {
@@ -61,8 +60,7 @@ func init() {
 
 	flag.UintVar(&attempts, "a", 100, "maximum `attempts` to generate a puzzle")
 	flag.BoolVar(&colorized, "c", false, "colorize the output for ANSI terminals")
-	flag.BoolVar(&encodings, "e", false, "Add base-36 encodings to the each grid display (used to write test cases)")
-	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
+	flag.BoolVar(&encodings, "e", false, "Add encodings to the each grid display (used to write test cases)")
 }
 
 // ParseEncoded parses an input string contains 81 digits and dots ('.') representing an initial puzzle layout.
@@ -124,7 +122,7 @@ func (g *Grid) allPoints() (res []pointCell) {
 }
 
 // cellChange is a convenience function that is called by strategy methods when a cell changes value.
-func (g *Grid) cellChange(res *bool, format string, a ...interface{}) {
+func (g *Grid) cellChange(res *bool, verbose uint, format string, a ...interface{}) {
 	*res = true
 	if verbose >= 1 {
 		fmt.Printf(format, a...)
@@ -200,7 +198,7 @@ func (g *Grid) Display() {
 	fmt.Printf("\t  %s%s%s%s%s%s%s\n", botLeft, bars, botT, bars, botT, bars, botRight)
 
 	if encodings {
-		fmt.Printf("base-36: %s\n", g.encode())
+		fmt.Printf("encoded: %#v\n", g.encode())
 	}
 }
 
@@ -243,15 +241,15 @@ func (g *Grid) emptyCell() bool {
 	return false
 }
 
-func (g *Grid) encode() string {
-	var b strings.Builder
+func (g *Grid) encode() []int {
+	var encoded []int
 	for r := zero; r < rows; r++ {
 		for c := zero; c < cols; c++ {
-			fmt.Fprintf(&b, "%02s", strconv.FormatUint(uint64(g.cells[r][c])/2, 36))
+			v, _ := strconv.Atoi(g.cells[r][c].String())
+			encoded = append(encoded, v)
 		}
 	}
-
-	return b.String()
+	return encoded
 }
 
 // maxWidth calculates the width in characters of the widest cell in the grid (maximum number of candidate digits). If the width is 9, it is changed to 1 because we will display only a dot ('.').
@@ -309,7 +307,7 @@ func (g *Grid) pt(p point) *cell {
 }
 
 // Reduce eliminates candidates from cells using logical methods. For example if a cell contains a single digit candidate, that digit can be removed from all other cells in the same box, row, and column.
-func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
+func (g *Grid) Reduce(strategies *map[string]bool, verbose uint) (Level, bool) {
 	maxLevel := Easy
 
 	if g.emptyCell() {
@@ -321,7 +319,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			return maxLevel, true
 		}
 
-		if g.reduceLevel(&maxLevel, Easy, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Easy, verbose, strategies, []func(uint) bool{
 			g.nakedSingle,
 			g.hiddenSingle,
 			g.nakedPair,
@@ -336,7 +334,7 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Standard, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Standard, verbose, strategies, []func(uint) bool{
 			g.xWing,
 			g.yWing,
 			g.singlesChains,
@@ -346,21 +344,22 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Hard, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Hard, verbose, strategies, []func(uint) bool{
 			g.xCycles,
+			g.xyChains,
 			g.medusa,
 			g.jellyfish,
 		}) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Expert, strategies, []func() bool{
+		if g.reduceLevel(&maxLevel, Expert, verbose, strategies, []func(uint) bool{
 			g.skLoops,
 		}) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Extreme, strategies, []func() bool{}) {
+		if g.reduceLevel(&maxLevel, Extreme, verbose, strategies, []func(uint) bool{}) {
 			continue
 		}
 
@@ -370,9 +369,9 @@ func (g *Grid) Reduce(strategies *map[string]bool) (Level, bool) {
 	return maxLevel, false
 }
 
-func (g *Grid) reduceLevel(maxLevel *Level, level Level, strategies *map[string]bool, fs []func() bool) bool {
+func (g *Grid) reduceLevel(maxLevel *Level, level Level, verbose uint, strategies *map[string]bool, fs []func(uint) bool) bool {
 	for _, f := range fs {
-		if f() {
+		if f(verbose) {
 			if strategies != nil {
 				name := nameOfFunc(f)
 				(*strategies)[name] = true
@@ -387,7 +386,7 @@ func (g *Grid) reduceLevel(maxLevel *Level, level Level, strategies *map[string]
 	return false
 }
 
-func nameOfFunc(f func() bool) string {
+func nameOfFunc(f func(uint) bool) string {
 	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 	i := strings.LastIndex(name, ".")
 	if i > 0 {
@@ -423,7 +422,7 @@ func (g *Grid) Search(solutions *[]*Grid) {
 	for _, d := range digits {
 		cp := *g
 		*cp.pt(point) = 1 << d
-		_, solved := cp.Reduce(nil)
+		_, solved := cp.Reduce(nil, 0)
 
 		if solved {
 			*solutions = append(*solutions, &cp)
@@ -533,9 +532,7 @@ outer:
 				points = points[1:]
 				*grid.pt(curr.point) = all // Clear the cell.
 
-				// cp := *grid
 				solutions = solutions[:0]
-				// cp.Search(&solutions)
 				grid.Search(&solutions)
 
 				if len(solutions) > 1 { // No longer unique.
@@ -546,7 +543,7 @@ outer:
 			// At this point, grid contains the smallest solution that is unique. Now we test the level.
 			cp := *grid
 			strategies := make(map[string]bool)
-			l, solved := cp.Reduce(&strategies)
+			l, solved := cp.Reduce(&strategies, 0)
 			solutions = solutions[:0]
 			cp.Search(&solutions)
 			if solved && l == level && len(solutions) == 1 {
@@ -568,7 +565,7 @@ outer:
 				sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 
 				results <- &Game{level, clues, s, grid, solution}
-				fmt.Printf("Generated a %s puzzle\n", level)
+				fmt.Printf("Generated %s puzzle\n", level)
 				continue outer
 			}
 
@@ -599,18 +596,23 @@ func colorize(c string, s string) string {
 	return fmt.Sprintf("%s", s)
 }
 
-func decode(s string) *Grid {
-	if len(s) != 162 {
-		panic(fmt.Sprintf("encoding has bad length: %d (should be 162)", len(s)))
+func decode(encoded []int) *Grid {
+	if len(encoded) != 81 {
+		panic(fmt.Sprintf("encoding has bad length: %d (should be 81)", len(encoded)))
 	}
 
 	g := Grid{}
-	for i := 0; i < 162; i += 2 {
-		c, err := strconv.ParseUint(s[i:i+2], 36, 16)
-		if err != nil || c > 1023 {
-			panic(fmt.Sprintf("encoding has bad value: %s", s[i:i+2]))
+	for i, e := range encoded {
+		s := strconv.Itoa(e)
+		c := cell(0)
+		for ci := 0; ci < len(s); ci++ {
+			v, err := strconv.Atoi(s[ci : ci+1])
+			if err != nil {
+				panic(fmt.Sprintf("encoding values must be digits -- found %s", s[ci:ci+1]))
+			}
+			c |= 1 << v
 		}
-		g.cells[i/2/9][(i/2)%9] = cell(c * 2)
+		g.cells[i/9][i%9] = c
 	}
 
 	return &g

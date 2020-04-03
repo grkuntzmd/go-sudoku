@@ -17,11 +17,11 @@
 package generator
 
 // nakedPair checks a group for 2 cells containing only the same pair of values. If present, those values can be removed from all other cells in the group. It returns true if it changes any cells.
-func (g *Grid) nakedPair() bool {
-	return g.nakedPairGroup(&box) || g.nakedPairGroup(&col) || g.nakedPairGroup(&row)
+func (g *Grid) nakedPair(verbose uint) bool {
+	return g.nakedPairGroup(&box, verbose) || g.nakedPairGroup(&col, verbose) || g.nakedPairGroup(&row, verbose)
 }
 
-func (g *Grid) nakedPairGroup(gr *group) (res bool) {
+func (g *Grid) nakedPairGroup(gr *group, verbose uint) (res bool) {
 	for ui, u := range gr.unit {
 	outer:
 		for _, p1 := range u {
@@ -46,7 +46,7 @@ func (g *Grid) nakedPairGroup(gr *group) (res bool) {
 					}
 
 					if g.pt(p3).andNot(cell1) {
-						g.cellChange(&res, "nakedPair: in %s %d removed %s from %s\n", gr.name, ui, cell1, p3)
+						g.cellChange(&res, verbose, "nakedPair: in %s %d removed %s from %s\n", gr.name, ui, cell1, p3)
 					}
 				}
 				continue outer

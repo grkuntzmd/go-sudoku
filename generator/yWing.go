@@ -17,7 +17,7 @@
 package generator
 
 // yWing removes candidates. If a cell has two candidates (AB) and in a neighboring unit (box, row, or column) of AB is another cell containing AC and in a second neighboring unit of AB is a cell containing BC, then any cell that can be "seen" by AC and BC (in both neighborhoods of AC and BC) that contain C can have C removed. It returns true if it changes any cells.
-func (g *Grid) yWing() (res bool) {
+func (g *Grid) yWing(verbose uint) (res bool) {
 	for _, u := range box.unit {
 		for _, p := range u { // Traverse all cells, using box units for convenience.
 			cell := *g.pt(p)
@@ -59,7 +59,7 @@ func (g *Grid) yWing() (res bool) {
 							if overlap[r][c] {
 								bits := (cell1 | cell2) &^ cell
 								if (&g.cells[r][c]).andNot(bits) {
-									g.cellChange(&res, "yWing: %s, %s, %s causes clearing %s from (%d, %d)\n", p, p1, p2, bits, r, c)
+									g.cellChange(&res, verbose, "yWing: %s, %s, %s causes clearing %s from (%d, %d)\n", p, p1, p2, bits, r, c)
 								}
 							}
 						}
@@ -74,7 +74,7 @@ func (g *Grid) yWing() (res bool) {
 
 func (g *Grid) findYWingCandidates(curr point, overlap int) (res []point) {
 	m := make(map[point]bool)
-	for p := range g.findYWingCandidatesUnit(&box.unit[boxOf(curr.r, curr.c)], curr, overlap) {
+	for p := range g.findYWingCandidatesUnit(&box.unit[boxOfPoint(curr)], curr, overlap) {
 		m[p] = true
 	}
 	for p := range g.findYWingCandidatesUnit(&col.unit[curr.c], curr, overlap) {
