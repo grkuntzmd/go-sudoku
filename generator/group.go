@@ -94,6 +94,27 @@ func init() {
 	}
 }
 
+func (u uint128) and(other uint128) uint128 {
+	return uint128{u.ms & other.ms, u.ls & other.ls}
+}
+
+func (u uint128) process(f func(uint8, uint8)) {
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
+			bit := r*9 + c
+			if bit < 64 {
+				if u.ls&(1<<bit) != 0 {
+					f(r, c)
+				}
+			} else {
+				if u.ms&(1<<(bit-64)) != 0 {
+					f(r, c)
+				}
+			}
+		}
+	}
+}
+
 func (u uint128) String() string {
 	var b strings.Builder
 	for r := zero; r < rows; r++ {
@@ -118,13 +139,15 @@ func (u uint128) String() string {
 	return b.String() //fmt.Sprintf("%64.64b%64.64b", u.ms, u.ls)
 }
 
-func (u *uint128) unset(p point) {
+func (u *uint128) unset(p point) *uint128 {
 	bit := p.r*9 + p.c
 	if bit < 64 {
 		u.ls &^= 1 << bit
 	} else {
 		u.ms &^= 1 << (bit - 64)
 	}
+
+	return u
 }
 
 func boxOf(r, c uint8) uint8 {
@@ -133,21 +156,4 @@ func boxOf(r, c uint8) uint8 {
 
 func boxOfPoint(p point) uint8 {
 	return boxOf(p.r, p.c)
-}
-
-func processInfluence(overlap uint128, f func(uint8, uint8)) {
-	for r := zero; r < rows; r++ {
-		for c := zero; c < cols; c++ {
-			bit := r*9 + c
-			if bit < 64 {
-				if overlap.ls&(1<<bit) != 0 {
-					f(r, c)
-				}
-			} else {
-				if overlap.ms&(1<<(bit-64)) != 0 {
-					f(r, c)
-				}
-			}
-		}
-	}
 }

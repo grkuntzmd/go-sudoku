@@ -27,11 +27,8 @@ const (
 type (
 	color uint8
 
-	unitLink struct {
-		pair
-		digit  int
-		unit   string
-		strong bool
+	pair struct {
+		left, right point
 	}
 
 	link struct {
@@ -39,8 +36,10 @@ type (
 		digit int
 	}
 
-	pair struct {
-		left, right point
+	unitLink struct {
+		link
+		unit   string
+		strong bool
 	}
 )
 
@@ -93,7 +92,7 @@ func (g *Grid) findStrongLinks(gr *group, strongLinks *[10]map[unitLink]bool) {
 				*s = make(map[unitLink]bool)
 			}
 
-			(*s)[sortLink(unitLink{pair{p[0], p[1]}, d, fmt.Sprintf("%s %d", gr.name, pi), true})] = true
+			(*s)[sortLink(unitLink{link{pair{p[0], p[1]}, d}, fmt.Sprintf("%s %d", gr.name, pi), true})] = true
 		}
 	}
 }

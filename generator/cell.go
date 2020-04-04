@@ -62,6 +62,16 @@ func (c cell) digits() []int {
 	return ds
 }
 
+func (c cell) lowestSetBit() int {
+	for d := 1; d <= 9; d++ {
+		if c&(1<<d) != 0 {
+			return d
+		}
+	}
+
+	return 0
+}
+
 func (c *cell) setTo(o cell) bool {
 	prev := *c
 	*c = o
@@ -76,14 +86,4 @@ func (c cell) String() string {
 		}
 	}
 	return b.String()
-}
-
-func (c cell) lowestSetBit() int {
-	for d := 1; d <= 9; d++ {
-		if c&(1<<d) != 0 {
-			return d
-		}
-	}
-
-	return 0
 }

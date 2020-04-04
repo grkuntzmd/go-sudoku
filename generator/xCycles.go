@@ -198,7 +198,7 @@ func (g *Grid) findXCycleWeakLinks(gr *group, weakLinks *[10]map[unitLink]bool) 
 						continue
 					}
 
-					(*w)[sortLink(unitLink{pair{p1, p2}, d, fmt.Sprintf("%s %d", gr.name, pi), false})] = true
+					(*w)[sortLink(unitLink{link{pair{p1, p2}, d}, fmt.Sprintf("%s %d", gr.name, pi), false})] = true
 				}
 			}
 		}
@@ -324,7 +324,7 @@ func findCycleRecursive(digit int, kind loopKind, chain []unitLink, best *[]unit
 	if strongAllowed {
 	strongOuter:
 		for s := range strongLinks {
-			reversed := unitLink{pair{s.right, s.left}, s.digit, s.unit, s.strong}
+			reversed := unitLink{link{pair{s.right, s.left}, s.digit}, s.unit, s.strong}
 
 			for _, c := range chain {
 				if s.pair == c.pair || reversed.pair == c.pair { // Already in the chain, skip.
@@ -348,7 +348,7 @@ func findCycleRecursive(digit int, kind loopKind, chain []unitLink, best *[]unit
 	if weakAllowed {
 	weakOuter:
 		for w := range weakLinks {
-			reversed := unitLink{pair{w.right, w.left}, w.digit, w.unit, w.strong}
+			reversed := unitLink{link{pair{w.right, w.left}, w.digit}, w.unit, w.strong}
 
 			for _, c := range chain {
 				if w.pair == c.pair || reversed.pair == c.pair { // Already in the chain, skip.

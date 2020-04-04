@@ -349,6 +349,7 @@ func (g *Grid) Reduce(strategies *map[string]bool, verbose uint) (Level, bool) {
 			g.xyChains,
 			g.medusa,
 			g.jellyfish,
+			g.wxyzWing,
 		}) {
 			continue
 		}
@@ -443,6 +444,13 @@ func (g *Grid) Search(solutions *[]*Grid) {
 
 // solved checks that a grid is completely solved (all boxes, rows, and columns have each digit appearing exactly once).
 func (g *Grid) solved() bool {
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
+			if bitCount[g.cells[r][c]] != 1 {
+				return false
+			}
+		}
+	}
 	return g.solvedGroup(&box) && g.solvedGroup(&col) && g.solvedGroup(&row)
 }
 

@@ -50,8 +50,7 @@ func (g *Grid) followChain(res *bool, verbose uint, chain []link, links [10]map[
 	firstLink := chain[0]
 	lastLink := chain[len(chain)-1]
 
-	if len(chain)%2 == 1 &&
-		boxOfPoint(firstLink.left) != boxOfPoint(lastLink.right) &&
+	if boxOfPoint(firstLink.left) != boxOfPoint(lastLink.right) &&
 		firstLink.left.c != lastLink.right.c &&
 		firstLink.left.r != lastLink.left.r {
 		front := *g.pt(firstLink.left) &^ (1 << firstLink.digit)
@@ -68,11 +67,10 @@ func (g *Grid) followChain(res *bool, verbose uint, chain []link, links [10]map[
 
 			// Remove all points in the chain from the overlap.
 			for _, l := range chain {
-				overlap.unset(l.left)
-				overlap.unset(l.right)
+				overlap.unset(l.left).unset(l.right)
 			}
 
-			processInfluence(overlap, func(r, c uint8) {
+			overlap.process(func(r, c uint8) {
 				p := point{r, c}
 				if g.pt(p).andNot(front) {
 					g.cellChange(res, verbose, "xyChains: remove %s from (%d, %d) because it is seen by %s and %s (chain: %v)\n", front, r, c, firstLink.left, lastLink.right, chain)
