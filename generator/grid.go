@@ -573,7 +573,6 @@ outer:
 				sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 
 				results <- &Game{level, clues, s, grid, solution}
-				fmt.Printf("Generated %s puzzle\n", level)
 				continue outer
 			}
 

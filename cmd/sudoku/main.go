@@ -193,8 +193,8 @@ func main() {
 			g := <-results
 			if g != nil {
 				fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
-				// g.Puzzle.Display()
-				// g.Solution.Display()
+				g.Puzzle.Display()
+				g.Solution.Display()
 				// games = append(games, g)
 			}
 		}
