@@ -142,7 +142,6 @@ func main() {
 					case 0:
 						fmt.Printf("still not solved after search, (%s)\n", strings.Join(names, ", "))
 					case 1:
-						sol++
 						fmt.Printf("single solution found, (%s)\n", strings.Join(names, ", "))
 						solutions[0].Display()
 					default:
