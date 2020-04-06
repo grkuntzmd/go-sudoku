@@ -356,6 +356,7 @@ func (g *Grid) Reduce(strategies *map[string]bool, verbose uint) (Level, bool) {
 
 		if g.reduceLevel(&maxLevel, Expert, verbose, strategies, []func(uint) bool{
 			g.skLoops,
+			g.exocet,
 		}) {
 			continue
 		}
