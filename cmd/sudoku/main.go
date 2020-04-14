@@ -1,17 +1,25 @@
 /*
+ * MIT LICENSE
+ *
  * Copyright © 2020, G.Ralph Kuntz, MD.
  *
- * Licensed under the Apache License, Version 2.0(the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIC
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package main
@@ -28,6 +36,7 @@ import (
 	"strings"
 
 	"dogdaze.org/sudoku/generator"
+	"github.com/grkuntzmd/qrcodegen"
 	"github.com/pkg/browser"
 )
 
@@ -37,13 +46,14 @@ type (
 	puzzle struct {
 		Num int
 		generator.Level
-		Break bool
-		template.HTML
+		Break  bool
+		Grid   template.HTML
+		QRCode template.HTML
 	}
 
 	solution struct {
-		Num int
-		template.HTML
+		Num  int
+		Grid template.HTML
 	}
 )
 
@@ -187,23 +197,24 @@ func main() {
 
 		close(tasks)
 
-		// games := make([]*generator.Game, 0, numberOfTasks)
+		games := make([]*generator.Game, 0, numberOfTasks)
 
 		for t := 0; t < numberOfTasks; t++ {
 			g := <-results
 			if g != nil {
 				fmt.Printf("%s (%d) %s\n", g.Level, g.Clues, strings.Join(g.Strategies, ", "))
+				fmt.Printf("%s\n", g.Puzzle.Encode())
 				g.Puzzle.Display()
 				g.Solution.Display()
-				// games = append(games, g)
+				games = append(games, g)
 			}
 		}
 
-		// sort.Slice(games, func(i, j int) bool {
-		// 	return games[i].Level < games[j].Level
-		// })
+		sort.Slice(games, func(i, j int) bool {
+			return games[i].Level < games[j].Level
+		})
 
-		// html(games)
+		html(games)
 	}
 }
 
@@ -221,7 +232,20 @@ func html(games []*generator.Game) {
 	solutions := make([]solution, 0, len(games))
 
 	for i, g := range games {
-		puzzles = append(puzzles, puzzle{i + 1, g.Level, i%2 == 1, template.HTML(g.Puzzle.SVG(0.8, false, false, nil))})
+		segs := []*qrcodegen.QRSegment{
+			qrcodegen.MakeAlphanumeric("SUDOKU://"),
+			qrcodegen.MakeNumeric(g.Puzzle.Encode()),
+		}
+		qrCode, err := qrcodegen.EncodeSegments(segs, qrcodegen.Low)
+		if err != nil {
+			panic(err)
+		}
+		svg, err := qrCode.ToSVGString(4, false)
+		if err != nil {
+			panic(err)
+		}
+
+		puzzles = append(puzzles, puzzle{i + 1, g.Level, i%2 == 1, template.HTML(g.Puzzle.SVG(0.8, false, false, nil)), template.HTML(svg)})
 		solutions = append(solutions, solution{i + 1, template.HTML(g.Solution.SVG(0.3, true, false, nil))})
 	}
 
@@ -235,6 +259,17 @@ func html(games []*generator.Game) {
 
 			<style>
 				.break { page-break-after: always; }
+				.puzzle {
+					display: grid;
+					grid-template: 40vh / 80% 20%;
+					column-gap: 10px;
+					justify-items: center;
+					align-items: stretch;
+				}
+				.small svg {
+					height: 100%;
+					width: 100%;
+				}
 				.solutions {
 					display: flex;
 					flex-direction: row;
@@ -248,7 +283,10 @@ func html(games []*generator.Game) {
 			{{ range .Puzzles }}
 				<div {{ if .Break }}class="break"{{ end }} style="page-break-inside: avoid;">
 					<h2>{{ .Num }} {{ .Level }}</h2>
-					<p>{{ .HTML }}</p>
+					<div class="puzzle">
+						<div>{{ .Grid }}</div>
+						<div class="small">{{ .QRCode }}</div>
+					</div>
 				</div>
 			{{ end }}
 			<p class="break"></p>
@@ -256,7 +294,7 @@ func html(games []*generator.Game) {
 				{{ range .Solutions }}
 					<div style="page-break-inside: avoid;">
 						<h4>{{ .Num }}</h4>
-						<p>{{ .HTML }}</p>
+						<p>{{ .Grid }}</p>
 					</div>
 				{{ end }}
 			</div>

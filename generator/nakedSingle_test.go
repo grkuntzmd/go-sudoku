@@ -1,17 +1,25 @@
 /*
+ * MIT LICENSE
+ *
  * Copyright © 2020, G.Ralph Kuntz, MD.
  *
- * Licensed under the Apache License, Version 2.0(the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIC
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package generator
@@ -23,7 +31,7 @@ import (
 )
 
 func TestNakedSingleBox(t *testing.T) {
-	g := decode([]int{2, 123456789, 123456789, 123456789, 7, 123456789, 123456789, 3, 8,
+	g := decodeInts([]int{2, 123456789, 123456789, 123456789, 7, 123456789, 123456789, 3, 8,
 		123456789, 123456789, 123456789, 123456789, 123456789, 6, 123456789, 7, 123456789, 3,
 		123456789, 123456789, 123456789, 4, 123456789, 6, 123456789, 123456789, 123456789,
 		123456789, 8, 123456789, 2, 123456789, 7, 123456789, 123456789, 1, 123456789,
@@ -39,11 +47,11 @@ func TestNakedSingleBox(t *testing.T) {
 		234569, 234569, 1456789, 1456789, 1456789, 123589, 123589, 6, 234569, 234569, 7,
 		1456789, 3, 1456789, 4, 123589, 123589, 23578, 23578, 4, 123579, 8, 123579, 1345678,
 		1345678, 9, 23578, 6, 23578, 4, 123579, 123579, 1345678, 1345678, 1345678, 9, 1,
-		23578, 123579, 6, 123579, 1345678, 1345678, 2}, g.encode())
+		23578, 123579, 6, 123579, 1345678, 1345678, 2}, g.encodeInts())
 }
 
 func TestNakedSingleCol(t *testing.T) {
-	g := decode([]int{2, 1456789, 1456789, 123589, 7, 123589, 12459, 3, 8, 1456789, 1456789,
+	g := decodeInts([]int{2, 1456789, 1456789, 123589, 7, 123589, 12459, 3, 8, 1456789, 1456789,
 		1456789, 123589, 123589, 6, 12459, 7, 12459, 3, 1456789, 1456789, 123589, 4, 123589,
 		6, 12459, 12459, 234569, 234569, 8, 1456789, 2, 1456789, 7, 123589, 123589, 1, 234569,
 		234569, 1456789, 1456789, 1456789, 123589, 123589, 6, 234569, 234569, 7, 1456789, 3,
@@ -56,11 +64,11 @@ func TestNakedSingleCol(t *testing.T) {
 		23459, 8, 156789, 2, 145789, 7, 12589, 135, 1, 23459, 23569, 156789, 159, 145789,
 		123589, 12589, 6, 456, 23459, 7, 156789, 3, 145789, 4, 12589, 135, 578, 23578, 4,
 		123579, 8, 123579, 1358, 14568, 9, 578, 6, 235, 4, 159, 123579, 1358, 14568, 13457, 9,
-		1, 235, 123579, 6, 123579, 1358, 14568, 2}, g.encode())
+		1, 235, 123579, 6, 123579, 1358, 14568, 2}, g.encodeInts())
 }
 
 func TestNakedSingleRow(t *testing.T) {
-	g := decode([]int{2, 45789, 1569, 123589, 7, 123589, 1259, 3, 8, 45678, 45789, 1569,
+	g := decodeInts([]int{2, 45789, 1569, 123589, 7, 123589, 1259, 3, 8, 45678, 45789, 1569,
 		123589, 159, 6, 1259, 7, 145, 3, 45789, 1569, 123589, 4, 123589, 6, 12459, 145, 456,
 		23459, 8, 156789, 2, 145789, 7, 12589, 135, 1, 23459, 23569, 156789, 159, 145789,
 		123589, 12589, 6, 456, 23459, 7, 156789, 3, 145789, 4, 12589, 135, 578, 23578, 4,
@@ -71,5 +79,5 @@ func TestNakedSingleRow(t *testing.T) {
 		6, 1259, 7, 145, 3, 5789, 159, 12589, 4, 12589, 6, 1259, 15, 456, 3459, 8, 1569, 2,
 		1459, 7, 159, 135, 1, 23459, 2359, 5789, 59, 45789, 23589, 2589, 6, 56, 259, 7, 15689,
 		3, 1589, 4, 12589, 15, 57, 2357, 4, 12357, 8, 12357, 135, 156, 9, 578, 6, 235, 4, 159,
-		123579, 1358, 158, 1357, 9, 1, 35, 357, 6, 357, 358, 458, 2}, g.encode())
+		123579, 1358, 158, 1357, 9, 1, 35, 357, 6, 357, 358, 458, 2}, g.encodeInts())
 }

@@ -1,17 +1,25 @@
 /*
+ * MIT LICENSE
+ *
  * Copyright © 2020, G.Ralph Kuntz, MD.
  *
- * Licensed under the Apache License, Version 2.0(the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIC
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package generator
@@ -198,7 +206,7 @@ func (g *Grid) Display() {
 	fmt.Printf("\t  %s%s%s%s%s%s%s\n", botLeft, bars, botT, bars, botT, bars, botRight)
 
 	if encodings {
-		fmt.Printf("encoded: %#v\n", g.encode())
+		fmt.Printf("encoded: %#v\n", g.encodeInts())
 	}
 }
 
@@ -241,7 +249,29 @@ func (g *Grid) emptyCell() bool {
 	return false
 }
 
-func (g *Grid) encode() []int {
+// Encode returns a "standard" (digits and zeroes) string represenation of a puzzle.
+func (g *Grid) Encode() string {
+	var b strings.Builder
+	for r := zero; r < rows; r++ {
+		for c := zero; c < cols; c++ {
+			if g.orig[r][c] {
+				cell := *g.pt(point{r, c})
+				for d := 1; d <= 9; d++ {
+					if cell&(1<<d) != 0 {
+						fmt.Fprintf(&b, "%d", d)
+						break
+					}
+				}
+			} else {
+				fmt.Fprint(&b, "0")
+			}
+		}
+	}
+
+	return b.String()
+}
+
+func (g *Grid) encodeInts() []int {
 	var encoded []int
 	for r := zero; r < rows; r++ {
 		for c := zero; c < cols; c++ {
@@ -386,20 +416,6 @@ func (g *Grid) reduceLevel(maxLevel *Level, level Level, verbose uint, strategie
 	}
 
 	return false
-}
-
-func nameOfFunc(f func(uint) bool) string {
-	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-	i := strings.LastIndex(name, ".")
-	if i > 0 {
-		name = name[i+1:]
-	}
-	i = strings.LastIndex(name, "-fm")
-	if i > 0 {
-		name = name[:i]
-	}
-
-	return name
 }
 
 // Search uses a brute-force descent to solve the grid and returns a slice of grids that may be empty if no solution was found, may contain a single grid if a unique solution was found, or may contain more than one solution.
@@ -573,6 +589,8 @@ outer:
 				}
 				sort.Slice(s, func(i, j int) bool { return s[i] < s[j] })
 
+				grid.orig = solution.orig
+
 				results <- &Game{level, clues, s, grid, solution}
 				continue outer
 			}
@@ -604,7 +622,7 @@ func colorize(c string, s string) string {
 	return fmt.Sprintf("%s", s)
 }
 
-func decode(encoded []int) *Grid {
+func decodeInts(encoded []int) *Grid {
 	if len(encoded) != 81 {
 		panic(fmt.Sprintf("encoding has bad length: %d (should be 81)", len(encoded)))
 	}
@@ -624,4 +642,18 @@ func decode(encoded []int) *Grid {
 	}
 
 	return &g
+}
+
+func nameOfFunc(f func(uint) bool) string {
+	name := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+	i := strings.LastIndex(name, ".")
+	if i > 0 {
+		name = name[i+1:]
+	}
+	i = strings.LastIndex(name, "-fm")
+	if i > 0 {
+		name = name[:i]
+	}
+
+	return name
 }
