@@ -69,8 +69,9 @@ var (
 	level3Count int
 	// level4Count int
 
-	input   inputs
-	verbose uint
+	input      inputs
+	bruteForce bool
+	verbose    uint
 )
 
 func init() {
@@ -81,6 +82,7 @@ func init() {
 	// flag.IntVar(&level4Count, "4", 0, "`count` of extreme (nearly impossible) games to generate")
 
 	flag.Var(&input, "i", "`file` containing input patterns (may be repeated)")
+	flag.BoolVar(&bruteForce, "b", false, "use brute force search to solve")
 	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 
 	if buildInfo != "" {
@@ -132,7 +134,7 @@ func main() {
 				}
 
 				strategies := make(map[string]bool)
-				maxLevel, solved := grid.Reduce(&strategies, verbose)
+				maxLevel, solved := grid.Reduce(true, &strategies, verbose)
 
 				var names []string
 				for n := range strategies {
@@ -146,18 +148,20 @@ func main() {
 					fmt.Printf("level: %s, solved, (%s)\n", maxLevel, strings.Join(names, ", "))
 				} else {
 					fmt.Printf("level: %s, not solved (%s)\n", maxLevel, strings.Join(names, ", "))
-					solutions := make([]*generator.Grid, 0)
-					grid.Search(&solutions)
-					switch len(solutions) {
-					case 0:
-						fmt.Printf("still not solved after search, (%s)\n", strings.Join(names, ", "))
-					case 1:
-						fmt.Printf("single solution found, (%s)\n", strings.Join(names, ", "))
-						solutions[0].Display()
-					default:
-						fmt.Printf("multiple solutions found, (%s)\n", strings.Join(names, ", "))
-						for _, s := range solutions {
-							s.Display()
+					if bruteForce {
+						solutions := make([]*generator.Grid, 0)
+						grid.Search(&solutions)
+						switch len(solutions) {
+						case 0:
+							fmt.Printf("still not solved after search, (%s)\n", strings.Join(names, ", "))
+						case 1:
+							fmt.Printf("single solution found, (%s)\n", strings.Join(names, ", "))
+							solutions[0].Display()
+						default:
+							fmt.Printf("multiple solutions found, (%s)\n", strings.Join(names, ", "))
+							for _, s := range solutions {
+								s.Display()
+							}
 						}
 					}
 				}

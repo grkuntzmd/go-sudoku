@@ -66,7 +66,7 @@ var (
 func init() {
 	rand.Seed(time.Now().Unix())
 
-	flag.UintVar(&attempts, "a", 100, "maximum `attempts` to generate a puzzle")
+	flag.UintVar(&attempts, "a", 500, "maximum `attempts` to generate a puzzle")
 	flag.BoolVar(&colorized, "c", false, "colorize the output for ANSI terminals")
 	flag.BoolVar(&encodings, "e", false, "Add encodings to the each grid display (used to write test cases)")
 }
@@ -337,7 +337,7 @@ func (g *Grid) pt(p point) *cell {
 }
 
 // Reduce eliminates candidates from cells using logical methods. For example if a cell contains a single digit candidate, that digit can be removed from all other cells in the same box, row, and column.
-func (g *Grid) Reduce(strategies *map[string]bool, verbose uint) (Level, bool) {
+func (g *Grid) Reduce(all bool, strategies *map[string]bool, verbose uint) (Level, bool) {
 	maxLevel := Easy
 
 	if g.emptyCell() {
@@ -352,47 +352,54 @@ func (g *Grid) Reduce(strategies *map[string]bool, verbose uint) (Level, bool) {
 		if g.reduceLevel(&maxLevel, Easy, verbose, strategies, []func(uint) bool{
 			g.nakedSingle,
 			g.hiddenSingle,
-			g.nakedPair,
-			g.nakedTriple,
-			g.nakedQuad,
-			g.hiddenPair,
-			g.hiddenTriple,
-			g.hiddenQuad,
-			g.pointingLine,
-			g.boxLine,
 		}) {
 			continue
 		}
 
-		if g.reduceLevel(&maxLevel, Standard, verbose, strategies, []func(uint) bool{
-			g.xWing,
-			g.yWing,
-			g.singlesChains,
-			g.swordfish,
-			g.xyzWing,
-		}) {
-			continue
-		}
+		if all {
+			if g.reduceLevel(&maxLevel, Easy, verbose, strategies, []func(uint) bool{
+				g.nakedPair,
+				g.nakedTriple,
+				g.nakedQuad,
+				g.hiddenPair,
+				g.hiddenTriple,
+				g.hiddenQuad,
+				g.pointingLine,
+				g.boxLine,
+			}) {
+				continue
+			}
 
-		if g.reduceLevel(&maxLevel, Hard, verbose, strategies, []func(uint) bool{
-			g.xCycles,
-			g.xyChains,
-			g.medusa,
-			g.jellyfish,
-			g.wxyzWing,
-		}) {
-			continue
-		}
+			if g.reduceLevel(&maxLevel, Standard, verbose, strategies, []func(uint) bool{
+				g.xWing,
+				g.yWing,
+				g.singlesChains,
+				g.swordfish,
+				g.xyzWing,
+			}) {
+				continue
+			}
 
-		if g.reduceLevel(&maxLevel, Expert, verbose, strategies, []func(uint) bool{
-			g.skLoops,
-			g.exocet,
-		}) {
-			continue
-		}
+			if g.reduceLevel(&maxLevel, Hard, verbose, strategies, []func(uint) bool{
+				g.xCycles,
+				g.xyChains,
+				g.medusa,
+				g.jellyfish,
+				g.wxyzWing,
+			}) {
+				continue
+			}
 
-		if g.reduceLevel(&maxLevel, Extreme, verbose, strategies, []func(uint) bool{}) {
-			continue
+			if g.reduceLevel(&maxLevel, Expert, verbose, strategies, []func(uint) bool{
+				g.skLoops,
+				g.exocet,
+			}) {
+				continue
+			}
+
+			if g.reduceLevel(&maxLevel, Extreme, verbose, strategies, []func(uint) bool{}) {
+				continue
+			}
 		}
 
 		break
@@ -440,7 +447,7 @@ func (g *Grid) Search(solutions *[]*Grid) {
 	for _, d := range digits {
 		cp := *g
 		*cp.pt(point) = 1 << d
-		_, solved := cp.Reduce(nil, 0)
+		_, solved := cp.Reduce(false, nil, 0)
 
 		if solved {
 			*solutions = append(*solutions, &cp)
@@ -568,7 +575,7 @@ outer:
 			// At this point, grid contains the smallest solution that is unique. Now we test the level.
 			cp := *grid
 			strategies := make(map[string]bool)
-			l, solved := cp.Reduce(&strategies, 0)
+			l, solved := cp.Reduce(true, &strategies, 0)
 			solutions = solutions[:0]
 			cp.Search(&solutions)
 			if solved && l == level && len(solutions) == 1 {
