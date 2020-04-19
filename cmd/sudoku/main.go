@@ -46,9 +46,10 @@ type (
 	puzzle struct {
 		Num int
 		generator.Level
-		Break  bool
-		Grid   template.HTML
-		QRCode template.HTML
+		Break   bool
+		Grid    template.HTML
+		QRCode  template.HTML
+		Encoded string
 	}
 
 	solution struct {
@@ -71,6 +72,7 @@ var (
 
 	input      inputs
 	bruteForce bool
+	htmlOutput bool
 	verbose    uint
 )
 
@@ -83,6 +85,7 @@ func init() {
 
 	flag.Var(&input, "i", "`file` containing input patterns (may be repeated)")
 	flag.BoolVar(&bruteForce, "b", false, "use brute force search to solve")
+	flag.BoolVar(&htmlOutput, "h", false, "display HTML output on the default browser")
 	flag.UintVar(&verbose, "v", 0, "`verbosity` level; higher emits more messages")
 
 	if buildInfo != "" {
@@ -214,11 +217,13 @@ func main() {
 			}
 		}
 
-		sort.Slice(games, func(i, j int) bool {
-			return games[i].Level < games[j].Level
-		})
+		if htmlOutput {
+			sort.Slice(games, func(i, j int) bool {
+				return games[i].Level < games[j].Level
+			})
 
-		html(games)
+			html(games)
+		}
 	}
 }
 
@@ -249,7 +254,7 @@ func html(games []*generator.Game) {
 			panic(err)
 		}
 
-		puzzles = append(puzzles, puzzle{i + 1, g.Level, i%2 == 1, template.HTML(g.Puzzle.SVG(0.8, false, false, nil)), template.HTML(svg)})
+		puzzles = append(puzzles, puzzle{i + 1, g.Level, i%2 == 1, template.HTML(g.Puzzle.SVG(0.8, false, false, nil)), template.HTML(svg), g.Puzzle.Encode()})
 		solutions = append(solutions, solution{i + 1, template.HTML(g.Solution.SVG(0.3, true, false, nil))})
 	}
 
@@ -274,6 +279,9 @@ func html(games []*generator.Game) {
 					height: 100%;
 					width: 100%;
 				}
+				.small-font {
+					font-size: 0.8em;
+				}
 				.solutions {
 					display: flex;
 					flex-direction: row;
@@ -291,6 +299,7 @@ func html(games []*generator.Game) {
 						<div>{{ .Grid }}</div>
 						<div class="small">{{ .QRCode }}</div>
 					</div>
+					<p class="small-font">Encoded: {{ .Encoded }}</p>
 				</div>
 			{{ end }}
 			<p class="break"></p>

@@ -60,7 +60,6 @@ const (
 var (
 	attempts  uint
 	colorized bool
-	encodings bool
 )
 
 func init() {
@@ -68,7 +67,6 @@ func init() {
 
 	flag.UintVar(&attempts, "a", 500, "maximum `attempts` to generate a puzzle")
 	flag.BoolVar(&colorized, "c", false, "colorize the output for ANSI terminals")
-	flag.BoolVar(&encodings, "e", false, "Add encodings to the each grid display (used to write test cases)")
 }
 
 // ParseEncoded parses an input string contains 81 digits and dots ('.') representing an initial puzzle layout.
@@ -204,10 +202,6 @@ func (g *Grid) Display() {
 
 	// Bottom line.
 	fmt.Printf("\t  %s%s%s%s%s%s%s\n", botLeft, bars, botT, bars, botT, bars, botRight)
-
-	if encodings {
-		fmt.Printf("encoded: %#v\n", g.encodeInts())
-	}
 }
 
 // digitPlaces returns an array of digits containing values where the bits (1 - 9) are set if the corresponding digit appears in that cell.
